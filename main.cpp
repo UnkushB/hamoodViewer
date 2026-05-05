@@ -2,6 +2,6 @@
 
 int main() {
     hamoodViewer app;
-    app.mainLoop();
+    app.run();
     return 0;
 }

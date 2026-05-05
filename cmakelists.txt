@@ -21,7 +21,8 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(glfw)
 
 add_executable(hamoodViewer main.cpp
-                src/hamoodViewer.cpp)
+                src/hamoodViewer.cpp
+                src/glfwStuff.cpp)
 
 target_link_libraries(hamoodViewer
     OpenGL::GL
