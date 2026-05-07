@@ -8,23 +8,38 @@ set(CMAKE_BUILD_TYPE Release)
 
 find_package(OpenGL REQUIRED)
 
-add_library(glad src/gl.c)
-target_include_directories(glad PUBLIC include)
+add_library(glad dependencies/glad/gl.c)
+target_include_directories(glad PUBLIC dependencies)
 
 include(FetchContent)
+
 FetchContent_Declare(
     glfw
     GIT_REPOSITORY https://github.com/glfw/glfw.git
     GIT_TAG 3.4
 )
 
+FetchContent_Declare(
+    glm
+    GIT_REPOSITORY https://github.com/g-truc/glm.git
+    GIT_TAG 1.0.3
+)
+
 FetchContent_MakeAvailable(glfw)
+FetchContent_MakeAvailable(glm)
 
 add_executable(hamoodViewer main.cpp
                 src/hamoodViewer.cpp
-                src/glfwStuff.cpp)
+                src/glfwStuff.cpp
+                src/model.cpp
+                src/buffers.cpp
+                src/orbitcam.cpp
+                src/shaders.cpp)
+
+target_include_directories(hamoodViewer PUBLIC dependencies)
 
 target_link_libraries(hamoodViewer
     OpenGL::GL
     glad
-    glfw)   
+    glfw
+    glm)   

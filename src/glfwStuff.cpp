@@ -1,6 +1,7 @@
 #include <glad/gl.h>
 #include "glfwStuff.h"
 #include <iostream>
+#include <glm/glm.hpp>
 
 void hamoodWindow::initGLFW() {
     glfwInit();
@@ -16,7 +17,9 @@ void hamoodWindow::initGLFW() {
 
     glfwMakeContextCurrent(window);
     glfwSetWindowUserPointer(window, this);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+    glfwSetCursorPosCallback(window, cursorPositionCallback);
+    glfwSetMouseButtonCallback(window, mouseButtonCallback);
 
     int version = gladLoadGL(glfwGetProcAddress);
     if (version == 0) {
@@ -25,7 +28,37 @@ void hamoodWindow::initGLFW() {
     }
 }
 
-void hamoodWindow::framebuffer_size_callback(GLFWwindow* window, int width, int height)
+void hamoodWindow::framebufferResizeCallback(GLFWwindow* window, int width, int height)
 {
+    auto app = reinterpret_cast<hamoodWindow*>(glfwGetWindowUserPointer(window));
+    app->windowWidth = width;
+    app->windowHeight = height;
     glViewport(0, 0, width, height);
+}
+
+void hamoodWindow::cursorPositionCallback(GLFWwindow* window, double xpos, double ypos) {
+    auto app = reinterpret_cast<hamoodWindow*>(glfwGetWindowUserPointer(window));
+    if (!app->leftButtonDown)
+        return;
+
+    app->yaw += (xpos - app->lastX) * 0.05;
+    app->pitch += (ypos - app->lastY) * 0.05;
+
+    app->yaw = std::fmod(app->yaw, 360.0f);
+    app->pitch = std::fmod(app->pitch, 360.0f);
+
+    app->lastX = xpos;
+    app->lastY = ypos;
+}
+
+void hamoodWindow::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+    auto app = reinterpret_cast<hamoodWindow*>(glfwGetWindowUserPointer(window));
+    if (button == GLFW_MOUSE_BUTTON_LEFT) {
+        if (action == GLFW_PRESS) {
+            app->leftButtonDown = true;
+            glfwGetCursorPos(window, &app->lastX, &app->lastY);
+        }
+        else if (action == GLFW_RELEASE)
+            app->leftButtonDown = false;
+    }
 }
