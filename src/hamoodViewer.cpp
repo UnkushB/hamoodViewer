@@ -5,18 +5,12 @@
 
 void hamoodViewer::run() {
     myWindow.initGLFW();
-    model.loadModel("balls");
+    model.loadModel(model.defaultModel);
     buffers.createVertexBuffer(model.vertices);
     buffers.createIndexBuffer(model.indices);
-    buffers.createTransformationsUBO();
+    buffers.createCameraUBO();
     shaders.createShaderProgram();
     cam.createCam(glm::vec3(0.0f), glm::vec3(0.0f, -1.0f, 0.0f), 5.0f, 0.0f, 0.0f);
-    unsigned int cameraTransformsIndex = glGetUniformBlockIndex(shaders.shaderID, "cameraTransformations");
-    glUniformBlockBinding(shaders.shaderID, cameraTransformsIndex, 0);
-
-    if (cameraTransformsIndex == GL_INVALID_INDEX) {
-        std::cout << "cameraTransformations block not found\n";
-    }
     glEnable(GL_DEPTH_TEST);
     mainLoop();
 }
@@ -24,6 +18,13 @@ void hamoodViewer::run() {
 
 void hamoodViewer::mainLoop() {
     while (!glfwWindowShouldClose(myWindow.window)) {
+        glfwPollEvents();
+        if (myWindow.reloadModel) {
+            model.loadModel(myWindow.windowsFile.lpstrFile);
+            buffers.createVertexBuffer(model.vertices);
+            buffers.createIndexBuffer(model.indices);
+            myWindow.reloadModel = false;
+        }
         draw();
     }
 
@@ -53,9 +54,7 @@ void hamoodViewer::draw() {
     myWindow.yaw = 0.0f;
     myWindow.pitch = 0.0f;
 
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, buffers.transformationsUBO);
-    glBindBuffer(GL_UNIFORM_BUFFER, buffers.transformationsUBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(cameraTransformations), &camMatrixs);
+    buffers.updateCameraUBO(camMatrixs);
 
 
     glBindVertexArray(buffers.VAO);
@@ -64,5 +63,5 @@ void hamoodViewer::draw() {
     }
 
     glfwSwapBuffers(myWindow.window);
-    glfwPollEvents();
+
 }

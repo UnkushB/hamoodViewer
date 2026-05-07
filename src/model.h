@@ -20,7 +20,7 @@ public:
     std::vector<mesh> meshes;
     glm::vec3 centroid;
     float radius;
-    void loadModel(std::string&& modelFilePath);
+    void loadModel(const std::string& modelFilePath);
 
 
 };

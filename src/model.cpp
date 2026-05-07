@@ -5,8 +5,14 @@
 #include <unordered_map>
 #include "model.h"
 
-void hamoodModel::loadModel(std::string&& modelFilePath) {
-    std::string modelParentDir = std::filesystem::path(defaultModel).parent_path().string();
+void hamoodModel::loadModel(const std::string& modelFilePath) {
+    vertices.clear();
+    indices.clear();
+    meshes.clear();
+    centroid = glm::vec3{ 0.0f };
+    radius = 0.0f;
+
+    std::string modelParentDir = std::filesystem::path(modelFilePath).parent_path().string();
     tinyobj::ObjReaderConfig reader_config;
 
     centroid = glm::vec3{ 0.0f };
@@ -17,7 +23,7 @@ void hamoodModel::loadModel(std::string&& modelFilePath) {
 
     tinyobj::ObjReader reader;
 
-    if (!reader.ParseFromFile(defaultModel, reader_config)) {
+    if (!reader.ParseFromFile(modelFilePath, reader_config)) {
         if (!reader.Error().empty()) {
             std::cerr << "TinyObjReader: " << reader.Error();
         }

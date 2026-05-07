@@ -9,8 +9,9 @@ struct cameraTransformations {
 
 class hamoodBuffers {
 public:
-    unsigned int VAO, VBO, EBO, transformationsUBO = 0;
+    unsigned int VAO = 0, VBO = 0, EBO = 0, cameraUBO = 0;
     void createVertexBuffer(std::vector<vertex>& vertices);
     void createIndexBuffer(std::vector<uint32_t>& indices);
-    void createTransformationsUBO();
+    void createCameraUBO();
+    void updateCameraUBO(cameraTransformations& camTransforms);
 };

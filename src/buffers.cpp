@@ -30,13 +30,19 @@ void hamoodBuffers::createIndexBuffer(std::vector<uint32_t>& indices) {
     glBindVertexArray(0);
 };
 
-void hamoodBuffers::createTransformationsUBO() {
-    if (!glIsBuffer(transformationsUBO))
-        glGenBuffers(1, &transformationsUBO);
+void hamoodBuffers::createCameraUBO() {
+    if (!glIsBuffer(cameraUBO))
+        glGenBuffers(1, &cameraUBO);
 
-    glBindBuffer(GL_UNIFORM_BUFFER, transformationsUBO);
+    glBindBuffer(GL_UNIFORM_BUFFER, cameraUBO);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(cameraTransformations), nullptr, GL_DYNAMIC_DRAW);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, transformationsUBO);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, cameraUBO);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
+}
+
+void hamoodBuffers::updateCameraUBO(cameraTransformations& camTransforms) {
+    glBindBuffer(GL_UNIFORM_BUFFER, cameraUBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(cameraTransformations), &camTransforms);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }

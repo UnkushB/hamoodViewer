@@ -20,12 +20,18 @@ void hamoodWindow::initGLFW() {
     glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
     glfwSetCursorPosCallback(window, cursorPositionCallback);
     glfwSetMouseButtonCallback(window, mouseButtonCallback);
+    glfwSetKeyCallback(window, keyboardCallback);
 
     int version = gladLoadGL(glfwGetProcAddress);
     if (version == 0) {
         std::cout << "Failed to initialize OpenGL context\n";
         return;
     }
+
+    windowsFile.lpstrFilter = "";
+    windowsFile.lpstrTitle = "Select Obj File";
+    windowsFile.nMaxFile = sizeof(buff);
+    windowsFile.lpstrFile = buff;
 }
 
 void hamoodWindow::framebufferResizeCallback(GLFWwindow* window, int width, int height)
@@ -60,5 +66,15 @@ void hamoodWindow::mouseButtonCallback(GLFWwindow* window, int button, int actio
         }
         else if (action == GLFW_RELEASE)
             app->leftButtonDown = false;
+    }
+}
+
+void hamoodWindow::keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    auto app = reinterpret_cast<hamoodWindow*>(glfwGetWindowUserPointer(window));
+    if (key == GLFW_KEY_A && action == GLFW_PRESS) {
+        WINBOOL result = GetOpenFileNameA(&app->windowsFile);
+        if (result) {
+            app->reloadModel = true;
+        }
     }
 }
