@@ -1,11 +1,7 @@
-#define TINYOBJLOADER_IMPLEMENTATION
-#define TINYOBJLOADER_USE_MAPBOX_EARCUT
-#include <tiny_obj_loader.h>
 #include <iostream>
 #include <filesystem>
 #include <unordered_map>
 #include <assimp/Importer.hpp>
-
 #include <assimp/postprocess.h>
 #include "model.h"
 
@@ -14,7 +10,7 @@ void hamoodModel::loadModel(const std::string& modelFilePath) {
     vertices.clear();
     indices.clear();
     meshes.clear();
-    //materials.clear();
+    materials.clear();
     //diffuseTextureNames.clear();
     centroid = glm::vec3(0.0f);
     radius = 0.0f;
@@ -26,6 +22,26 @@ void hamoodModel::loadModel(const std::string& modelFilePath) {
         std::cout << "Failed to load model\n";
 
     glm::mat4 transforms(1.0f);
+
+    for (unsigned int i = 0; i < scene->mNumMaterials; ++i) {
+        const aiMaterial& mat = *scene->mMaterials[i];
+
+        hamoodMaterial tempMat;
+
+        aiColor3D diffuseColor;
+        if (mat.Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor) != AI_SUCCESS) {
+            diffuseColor = aiColor3D(0.5, 0.2, 0.8);
+        }
+        tempMat.diffuse = glm::vec3{ diffuseColor.r, diffuseColor.g, diffuseColor.b };
+
+
+        float opacity;
+        if (mat.Get(AI_MATKEY_OPACITY, opacity) != AI_SUCCESS)
+            opacity = 1.0f;
+        tempMat.opacity = opacity;
+
+        materials.emplace_back(tempMat);
+    }
 
     processNode(scene->mRootNode, scene, transforms);
 
@@ -48,6 +64,7 @@ void hamoodModel::processNode(aiNode* node, const aiScene* scene, glm::mat4 accu
         tempMesh.indexCount = 0;
         tempMesh.vertexCount = mesh->mNumVertices;
         tempMesh.vertexOffset = vertices.size();
+        tempMesh.materialIndex = mesh->mMaterialIndex;
 
         for (unsigned int vertexIndex = 0; vertexIndex < mesh->mNumVertices; ++vertexIndex) {
             aiVector3D vertexCoords = mesh->mVertices[vertexIndex];

@@ -13,6 +13,12 @@ struct hamoodMesh {
     uint32_t indexCount;
     uint32_t vertexOffset;
     uint32_t vertexCount;
+    int materialIndex;
+};
+
+struct hamoodMaterial {
+    glm::vec3 diffuse;
+    float opacity;
 };
 
 class hamoodModel {
@@ -20,7 +26,8 @@ public:
     std::string defaultModel = "P:/learnOpenGL/models/despacito/DespacitoSpider.obj";
     std::vector<vertex> vertices;
     std::vector<uint32_t> indices;
-    std::vector<hamoodMesh> meshes;;
+    std::vector<hamoodMesh> meshes;
+    std::vector<hamoodMaterial> materials;
     glm::vec3 centroid;
     float radius;
     void loadModel(const std::string& modelFilePath);

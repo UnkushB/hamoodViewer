@@ -48,6 +48,9 @@ void hamoodShaders::createShaderProgram() {
     unsigned int cameraTransformsIndex = glGetUniformBlockIndex(shaderID, "cameraTransformations");
     glUniformBlockBinding(shaderID, cameraTransformsIndex, 0);
 
+    unsigned int materialIndex = glGetUniformBlockIndex(shaderID, "material");
+    glUniformBlockBinding(shaderID, materialIndex, 1);
+
     glDeleteShader(vertex);
     glDeleteShader(fragment);
 }

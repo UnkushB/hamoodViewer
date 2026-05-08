@@ -57,3 +57,19 @@ void hamoodBuffers::updateCameraUBO(cameraTransformations& camTransforms) {
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(cameraTransformations), &camTransforms);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
+
+void hamoodBuffers::createMaterialUBO() {
+    if (materialUBO == 0)
+        glGenBuffers(1, &materialUBO);
+
+    glBindBuffer(GL_UNIFORM_BUFFER, materialUBO);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(hamoodMaterial), nullptr, GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 1, materialUBO);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
+void hamoodBuffers::updateMaterialUBO(hamoodMaterial& material) {
+    glBindBuffer(GL_UNIFORM_BUFFER, materialUBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(hamoodMaterial), &material);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}

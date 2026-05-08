@@ -9,6 +9,7 @@ void hamoodViewer::run() {
     buffers.createVertexBuffer(model.vertices);
     buffers.createIndexBuffer(model.indices);
     buffers.createCameraUBO();
+    buffers.createMaterialUBO();
     shaders.createShaderProgram();
     cam.createCam(glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 5.0f, 0.0f, 0.0f);
     glEnable(GL_DEPTH_TEST);
@@ -60,6 +61,7 @@ void hamoodViewer::draw() {
     glBindVertexArray(buffers.VAO);
     for (auto& mesh : model.meshes) {
         // glUniformMatrix4fv(shaders.localTransformLocation, 1, GL_FALSE, glm::value_ptr(mesh.localTransform));
+        buffers.updateMaterialUBO(model.materials[mesh.materialIndex]);
         glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mesh.indexOffset * sizeof(uint32_t)));
     }
 
