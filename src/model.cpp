@@ -11,7 +11,7 @@ void hamoodModel::loadModel(const std::string& modelFilePath) {
     indices.clear();
     meshes.clear();
     materials.clear();
-    //diffuseTextureNames.clear();
+    diffuseTexturePaths.clear();
     centroid = glm::vec3(0.0f);
     radius = 0.0f;
 
@@ -26,7 +26,15 @@ void hamoodModel::loadModel(const std::string& modelFilePath) {
     for (unsigned int i = 0; i < scene->mNumMaterials; ++i) {
         const aiMaterial& mat = *scene->mMaterials[i];
 
-        hamoodMaterial tempMat;
+        hamoodMaterial tempMat{};
+
+        if (mat.GetTextureCount(aiTextureType_DIFFUSE) > 0) {
+            aiString texturePath;
+            mat.GetTexture(aiTextureType_DIFFUSE, 0, &texturePath);
+            std::string fullTexturePath = modelParentDir + "/" + texturePath.C_Str();
+            //diffuseTextures.emplace(fullTexturePath, -1);
+            diffuseTexturePaths[fullTexturePath].push_back(i);
+        }
 
         aiColor3D diffuseColor;
         if (mat.Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor) != AI_SUCCESS) {

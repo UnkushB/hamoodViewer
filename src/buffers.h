@@ -19,4 +19,7 @@ public:
 
     void createMaterialUBO();
     void updateMaterialUBO(hamoodMaterial& material);
+
+    std::vector<unsigned int> diffuseTextures;
+    void createDiffuseTextures(std::unordered_map<std::string, std::vector<int>>& texturePaths, std::vector<hamoodMaterial>& materials);
 };

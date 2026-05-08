@@ -19,6 +19,8 @@ struct hamoodMesh {
 struct hamoodMaterial {
     glm::vec3 diffuse;
     float opacity;
+    int diffuseTextureIndex = -1;
+    int padding[3];
 };
 
 class hamoodModel {
@@ -28,6 +30,7 @@ public:
     std::vector<uint32_t> indices;
     std::vector<hamoodMesh> meshes;
     std::vector<hamoodMaterial> materials;
+    std::unordered_map<std::string, std::vector<int>> diffuseTexturePaths;
     glm::vec3 centroid;
     float radius;
     void loadModel(const std::string& modelFilePath);

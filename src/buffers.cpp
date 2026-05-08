@@ -73,3 +73,49 @@ void hamoodBuffers::updateMaterialUBO(hamoodMaterial& material) {
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(hamoodMaterial), &material);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
+
+void hamoodBuffers::createDiffuseTextures(std::unordered_map<std::string, std::vector<int>>& texturePaths, std::vector<hamoodMaterial>& materials) {
+    stbi_set_flip_vertically_on_load(true);
+
+    if (diffuseTextures.size() > 0) {
+        glDeleteTextures(diffuseTextures.size(), diffuseTextures.data());
+        diffuseTextures.clear();
+    }
+    int textureIndex = 0;
+    for (auto& p : texturePaths) {
+        int width, height, nrChannels;
+
+        unsigned char* data = stbi_load(p.first.c_str(), &width, &height, &nrChannels, 0);
+
+        if (!data) {
+            stbi_image_free(data);
+            continue;
+        }
+
+        unsigned int texture;
+        glGenTextures(1, &texture);
+
+        glBindTexture(GL_TEXTURE_2D, texture);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+        if (nrChannels == 3)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        else
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+        diffuseTextures.push_back(texture);
+
+        for (auto& matIndex : p.second) {
+            materials[matIndex].diffuseTextureIndex = textureIndex;
+        }
+
+        ++textureIndex;
+        stbi_image_free(data);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+}

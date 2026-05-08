@@ -51,6 +51,8 @@ void hamoodShaders::createShaderProgram() {
     unsigned int materialIndex = glGetUniformBlockIndex(shaderID, "material");
     glUniformBlockBinding(shaderID, materialIndex, 1);
 
+    glUniform1i(glGetUniformLocation(shaderID, "diffuseTexture"), 0);
+
     glDeleteShader(vertex);
     glDeleteShader(fragment);
 }
