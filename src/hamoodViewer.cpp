@@ -1,7 +1,7 @@
 #include <glad/gl.h>
 #include "hamoodViewer.h"
 #include <iostream>
-
+#include <glm/gtc/type_ptr.hpp>
 
 void hamoodViewer::run() {
     myWindow.initGLFW();
@@ -9,10 +9,8 @@ void hamoodViewer::run() {
     buffers.createVertexBuffer(model.vertices);
     buffers.createIndexBuffer(model.indices);
     buffers.createCameraUBO();
-    buffers.createMaterialUBO();
-    buffers.createDiffuseTextures(model.diffuseTextureNames, model.materials);
     shaders.createShaderProgram();
-    cam.createCam(glm::vec3(0.0f), glm::vec3(0.0f, -1.0f, 0.0f), 5.0f, 0.0f, 0.0f);
+    cam.createCam(glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 5.0f, 0.0f, 0.0f);
     glEnable(GL_DEPTH_TEST);
     mainLoop();
 }
@@ -25,10 +23,6 @@ void hamoodViewer::mainLoop() {
             model.loadModel(myWindow.windowsFile.lpstrFile);
             buffers.createVertexBuffer(model.vertices);
             buffers.createIndexBuffer(model.indices);
-            std::cout << "starting diffuse textures creation\n";
-            buffers.createDiffuseTextures(model.diffuseTextureNames, model.materials);
-            std::cout << "made diffuse textures\n";
-            std::cout << model.diffuseTextureNames.size() << std::endl;
             myWindow.reloadModel = false;
         }
         draw();
@@ -50,7 +44,7 @@ void hamoodViewer::draw() {
     cam.rotate_y(myWindow.pitch);
     glm::mat4 viewMatrix = cam.get_view_matrix();
     glm::mat4 projMatrix = glm::perspective(glm::radians(90.0f), static_cast<float>(myWindow.windowWidth) / static_cast<float>(myWindow.windowHeight), 0.1f, 100.0f);
-    projMatrix[1][1] *= -1.0f;
+    //projMatrix[1][1] *= -1.0f;
 
     cameraTransformations camMatrixs;
     camMatrixs.model = modelTransform;
@@ -65,14 +59,7 @@ void hamoodViewer::draw() {
 
     glBindVertexArray(buffers.VAO);
     for (auto& mesh : model.meshes) {
-        buffers.updateMaterialUBO(model.materials[mesh.materialIndex]);
-        glActiveTexture(GL_TEXTURE0);
-        if (model.materials[mesh.materialIndex].diffuse[3] != -1) {
-            glBindTexture(GL_TEXTURE_2D, buffers.diffuesTextures[model.materials[mesh.materialIndex].diffuse[3]]);
-        }
-        else {
-            glBindTexture(GL_TEXTURE_2D, 0);
-        }
+        // glUniformMatrix4fv(shaders.localTransformLocation, 1, GL_FALSE, glm::value_ptr(mesh.localTransform));
         glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mesh.indexOffset * sizeof(uint32_t)));
     }
 

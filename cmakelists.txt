@@ -25,8 +25,27 @@ FetchContent_Declare(
     GIT_TAG 1.0.3
 )
 
+set(ASSIMP_BUILD_ASSIMP_VIEW OFF CACHE BOOL "" FORCE)
+set(ASSIMP_INSTALL_PDB OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+set(ASSIMP_NO_EXPORT ON CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_OBJ_IMPORTER ON CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_GLTF_IMPORTER ON CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
+
+
+FetchContent_Declare(
+    assimp
+    GIT_REPOSITORY https://github.com/assimp/assimp.git
+    GIT_TAG v6.0.4
+)
+
 FetchContent_MakeAvailable(glfw)
 FetchContent_MakeAvailable(glm)
+FetchContent_MakeAvailable(assimp)
 
 add_executable(hamoodViewer main.cpp
                 src/hamoodViewer.cpp
@@ -42,4 +61,5 @@ target_link_libraries(hamoodViewer
     OpenGL::GL
     glad
     glfw
-    glm)   
+    glm
+    assimp)   

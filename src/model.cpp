@@ -1,116 +1,80 @@
 #define TINYOBJLOADER_IMPLEMENTATION
+#define TINYOBJLOADER_USE_MAPBOX_EARCUT
 #include <tiny_obj_loader.h>
 #include <iostream>
 #include <filesystem>
 #include <unordered_map>
+#include <assimp/Importer.hpp>
+
+#include <assimp/postprocess.h>
 #include "model.h"
 
 void hamoodModel::loadModel(const std::string& modelFilePath) {
+    std::string modelParentDir = std::filesystem::path(modelFilePath).parent_path().string();
     vertices.clear();
     indices.clear();
     meshes.clear();
-    materials.clear();
-    diffuseTextureNames.clear();
-    centroid = glm::vec3{ 0.0f };
+    //materials.clear();
+    //diffuseTextureNames.clear();
+    centroid = glm::vec3(0.0f);
     radius = 0.0f;
 
-    std::string modelParentDir = std::filesystem::path(modelFilePath).parent_path().string();
-    tinyobj::ObjReaderConfig reader_config;
+    Assimp::Importer importer;
+    const aiScene* scene = importer.ReadFile(modelFilePath, aiProcess_Triangulate | aiProcess_GenSmoothNormals);
 
-    std::cout << "model parent dir: " << modelParentDir << std::endl;
+    if (scene == nullptr)
+        std::cout << "Failed to load model\n";
 
-    centroid = glm::vec3{ 0.0f };
-    radius = 0.0f;
+    glm::mat4 transforms(1.0f);
 
-    reader_config.mtl_search_path = modelParentDir; // Path to material files
-    reader_config.triangulate = true;
-
-    tinyobj::ObjReader reader;
-
-    if (!reader.ParseFromFile(modelFilePath, reader_config)) {
-        if (!reader.Error().empty()) {
-            std::cerr << "TinyObjReader: " << reader.Error();
-        }
-        exit(1);
-    }
-
-    if (!reader.Warning().empty()) {
-        std::cout << "TinyObjReader: " << reader.Warning();
-    }
-
-    auto& attrib = reader.GetAttrib();
-    auto& shapes = reader.GetShapes();
-    auto& tinyMaterials = reader.GetMaterials();
-
-    std::unordered_map<int, std::vector<uint32_t>> perMaterialIndices;
-    uint32_t index = 0;
-    for (size_t s = 0; s < shapes.size(); s++) {
-        // Loop over faces(polygon)
-        size_t index_offset = 0;
-        for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
-            size_t fv = size_t(shapes[s].mesh.num_face_vertices[f]);
-            int materialID = -1;
-            if (!shapes[s].mesh.material_ids.empty())
-                materialID = shapes[s].mesh.material_ids[f];
-            // Loop over vertices in the face.
-            for (size_t v = 0; v < fv; v++) {
-                // access to vertex
-                tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
-                tinyobj::real_t vx = attrib.vertices[3 * size_t(idx.vertex_index) + 0];
-                tinyobj::real_t vy = attrib.vertices[3 * size_t(idx.vertex_index) + 1];
-                tinyobj::real_t vz = attrib.vertices[3 * size_t(idx.vertex_index) + 2];
-
-                tinyobj::real_t tx = 0.0f;
-                tinyobj::real_t ty = 0.0f;
-                if (idx.texcoord_index >= 0) {
-                    tx = attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
-                    ty = attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
-                }
-
-
-                vertices.push_back({ glm::vec3{vx, vy, vz}, glm::vec2{tx, ty} });
-                centroid += vertices.back().pos;
-                perMaterialIndices[materialID].push_back(index);
-                ++index;
-            }
-            index_offset += fv;
-        }
-
-    }
-
-    for (size_t m = 0; m < tinyMaterials.size(); ++m) {
-        material mat{};
-        auto& diffuse = tinyMaterials[m].diffuse;
-        //auto& opacity = tinyMaterials[m].dissolve;
-        mat.diffuse = glm::vec4{ diffuse[0], diffuse[1], diffuse[2], -1 };
-        std::string fullTexturePath = modelParentDir + '\\' + tinyMaterials[m].diffuse_texname;
-        diffuseTextureNames[fullTexturePath].push_back(m);
-        materials.emplace_back(mat);
-    }
-
-    material defaultMat{};
-    defaultMat.diffuse = glm::vec4(0.5f, 0.5f, 0.5f, -1);
-    materials.emplace_back(defaultMat);
-
-    //std::cout << "materials size: " << materials.size() << std::endl;
+    processNode(scene->mRootNode, scene, transforms);
 
     centroid /= vertices.size();
 
-    for (auto& x : vertices) {
-        glm::vec3 vert = x.pos;
-        radius = std::max(radius, glm::length(vert - centroid));
+    for (const hamoodMesh& mesh : meshes) {
+        for (uint64_t i = mesh.vertexOffset; i < mesh.vertexOffset + mesh.vertexCount; ++i) {
+            glm::vec3 vert = vertices[i].pos;
+            radius = std::max(radius, glm::length(vert - centroid));
+        }
+    }
+}
+
+void hamoodModel::processNode(aiNode* node, const aiScene* scene, glm::mat4 accumTransforms) {
+    for (unsigned int i = 0; i < node->mNumMeshes; ++i) {
+        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+
+        hamoodMesh tempMesh{};
+        tempMesh.indexOffset = indices.size();
+        tempMesh.indexCount = 0;
+        tempMesh.vertexCount = mesh->mNumVertices;
+        tempMesh.vertexOffset = vertices.size();
+
+        for (unsigned int vertexIndex = 0; vertexIndex < mesh->mNumVertices; ++vertexIndex) {
+            aiVector3D vertexCoords = mesh->mVertices[vertexIndex];
+            glm::vec2 textureCoords{ 0.5f };
+            if (mesh->mTextureCoords[0]) {
+                textureCoords.x = mesh->mTextureCoords[0][vertexIndex].x;
+                textureCoords.y = mesh->mTextureCoords[0][vertexIndex].y;
+            }
+
+            vertices.push_back({ glm::vec3{vertexCoords.x, vertexCoords.y, vertexCoords.z}, textureCoords });
+            centroid += vertices.back().pos;
+        }
+
+        for (unsigned int faceIndex = 0; faceIndex < mesh->mNumFaces; ++faceIndex) {
+            aiFace& face = mesh->mFaces[faceIndex];
+            tempMesh.indexCount += face.mNumIndices;
+
+            for (unsigned int index = 0; index < face.mNumIndices; ++index) {
+                indices.push_back(face.mIndices[index] + tempMesh.vertexOffset);
+                //indices.push_back(face.mIndices[index]);
+            }
+        }
+
+        meshes.emplace_back(tempMesh);
     }
 
-    for (auto& x : perMaterialIndices) {
-        mesh mesh{};
-        mesh.indexOffset = uint32_t(indices.size());
-        mesh.indexCount = uint32_t(x.second.size());
-        mesh.materialIndex = x.first;
-        //std::cout << "mesh index: " << x.first << std::endl;
-        indices.insert(indices.end(), x.second.begin(), x.second.end());
-
-        meshes.emplace_back(mesh);
+    for (unsigned int i = 0; i < node->mNumChildren; ++i) {
+        processNode(node->mChildren[i], scene, accumTransforms);
     }
-
-    std::cout << meshes.size() << " : " << vertices.size() << " : " << indices.size() << std::endl;
 }
