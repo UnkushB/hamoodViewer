@@ -82,6 +82,7 @@ void hamoodBuffers::createDiffuseTextures(std::unordered_map<std::string, std::v
         diffuseTextures.clear();
     }
     int textureIndex = 0;
+
     for (auto& p : texturePaths) {
         int width, height, nrChannels;
 
@@ -99,19 +100,29 @@ void hamoodBuffers::createDiffuseTextures(std::unordered_map<std::string, std::v
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        int hasOpacity = -1;
 
         if (nrChannels == 3)
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        else
+        else if (nrChannels == 4) {
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+            hasOpacity = 1;
+        }
+        else if (nrChannels == 2)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, width, height, 0, GL_RG, GL_UNSIGNED_BYTE, data);
+        else if (nrChannels == 1)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, width, height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, data);
+
+        //glGenerateMipmap(GL_TEXTURE_2D);
 
         diffuseTextures.push_back(texture);
 
         for (auto& matIndex : p.second) {
             materials[matIndex].diffuseTextureIndex = textureIndex;
+            materials[matIndex].diffuseHasOpacity = 1;
         }
 
         ++textureIndex;

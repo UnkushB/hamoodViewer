@@ -21,6 +21,7 @@ void hamoodWindow::initGLFW() {
     glfwSetCursorPosCallback(window, cursorPositionCallback);
     glfwSetMouseButtonCallback(window, mouseButtonCallback);
     glfwSetKeyCallback(window, keyboardCallback);
+    glfwSetScrollCallback(window, scrollCallback);
 
     int version = gladLoadGL(glfwGetProcAddress);
     if (version == 0) {
@@ -77,4 +78,9 @@ void hamoodWindow::keyboardCallback(GLFWwindow* window, int key, int scancode, i
             app->reloadModel = true;
         }
     }
+}
+
+void hamoodWindow::scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
+    auto app = reinterpret_cast<hamoodWindow*>(glfwGetWindowUserPointer(window));
+    app->scrollOffset = yoffset;
 }

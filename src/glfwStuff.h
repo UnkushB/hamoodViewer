@@ -19,4 +19,7 @@ public:
     OPENFILENAMEA windowsFile = { sizeof(OPENFILENAMEA) };
     char buff[MAX_PATH] = {};
     static void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+    float scrollOffset = 0.0f;
+    static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 };

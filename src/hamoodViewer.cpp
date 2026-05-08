@@ -14,6 +14,8 @@ void hamoodViewer::run() {
     shaders.createShaderProgram();
     cam.createCam(glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 5.0f, 0.0f, 0.0f);
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     mainLoop();
 }
 
@@ -41,6 +43,9 @@ void hamoodViewer::draw() {
 
     glUseProgram(shaders.shaderID);
 
+    cam.changeRadius(myWindow.scrollOffset);
+    myWindow.scrollOffset = 0.0f;
+
     glm::mat4 modelTransform(1.0f);
     modelTransform = glm::scale(modelTransform, glm::vec3(2.0f / model.radius));
     modelTransform = glm::translate(modelTransform, -model.centroid);
@@ -48,7 +53,6 @@ void hamoodViewer::draw() {
     cam.rotate_y(myWindow.pitch);
     glm::mat4 viewMatrix = cam.get_view_matrix();
     glm::mat4 projMatrix = glm::perspective(glm::radians(90.0f), static_cast<float>(myWindow.windowWidth) / static_cast<float>(myWindow.windowHeight), 0.1f, 100.0f);
-    //projMatrix[1][1] *= -1.0f;
 
     cameraTransformations camMatrixs;
     camMatrixs.model = modelTransform;
@@ -69,8 +73,8 @@ void hamoodViewer::draw() {
         if (curMaterial.diffuseTextureIndex != -1) {
             glBindTexture(GL_TEXTURE_2D, buffers.diffuseTextures[curMaterial.diffuseTextureIndex]);
         }
-        else
-            glBindTexture(GL_TEXTURE_2D, 0);
+        // else
+            // glBindTexture(GL_TEXTURE_2D, 0);
         glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mesh.indexOffset * sizeof(uint32_t)));
     }
 

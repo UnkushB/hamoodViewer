@@ -24,6 +24,12 @@ void orbit_cam::rotate_y(const float radians) {
         y_angle = -y_cap;
 };
 
+void orbit_cam::changeRadius(const float offset) {
+    radius -= offset;
+    if (radius < 0.5f)
+        radius = 0.5f;
+}
+
 glm::vec3 orbit_cam::get_eye() {
     const float sin_x = sin(x_angle);
     const float cosin_x = cos(x_angle);

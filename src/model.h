@@ -20,7 +20,8 @@ struct hamoodMaterial {
     glm::vec3 diffuse;
     float opacity;
     int diffuseTextureIndex = -1;
-    int padding[3];
+    int diffuseHasOpacity = -1;
+    int padding[2];
 };
 
 class hamoodModel {

@@ -17,6 +17,8 @@ public:
 
     void rotate_y(const float radians);
 
+    void changeRadius(const float offset);
+
     glm::vec3 get_eye();
 
     glm::mat4 get_view_matrix();
