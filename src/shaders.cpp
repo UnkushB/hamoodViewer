@@ -46,6 +46,15 @@ void hamoodShaders::createShaderProgram() {
     unsigned int cameraTransformsIndex = glGetUniformBlockIndex(shaderID, "cameraTransformations");
     glUniformBlockBinding(shaderID, cameraTransformsIndex, 0);
 
+    unsigned int materialIndex = glGetUniformBlockIndex(shaderID, "material");
+    glUniformBlockBinding(shaderID, materialIndex, 1);
+
+    glUniform1i(glGetUniformLocation(shaderID, "diffuseTexture"), 0);
+
+    if (materialIndex == GL_INVALID_INDEX) {
+        std::cout << "material UBO block not found\n";
+    }
+
     glDeleteShader(vertex);
     glDeleteShader(fragment);
 }

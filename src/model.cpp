@@ -9,11 +9,15 @@ void hamoodModel::loadModel(const std::string& modelFilePath) {
     vertices.clear();
     indices.clear();
     meshes.clear();
+    materials.clear();
+    diffuseTextureNames.clear();
     centroid = glm::vec3{ 0.0f };
     radius = 0.0f;
 
     std::string modelParentDir = std::filesystem::path(modelFilePath).parent_path().string();
     tinyobj::ObjReaderConfig reader_config;
+
+    std::cout << "model parent dir: " << modelParentDir << std::endl;
 
     centroid = glm::vec3{ 0.0f };
     radius = 0.0f;
@@ -36,6 +40,7 @@ void hamoodModel::loadModel(const std::string& modelFilePath) {
 
     auto& attrib = reader.GetAttrib();
     auto& shapes = reader.GetShapes();
+    auto& tinyMaterials = reader.GetMaterials();
 
     std::unordered_map<int, std::vector<uint32_t>> perMaterialIndices;
     uint32_t index = 0;
@@ -55,7 +60,15 @@ void hamoodModel::loadModel(const std::string& modelFilePath) {
                 tinyobj::real_t vy = attrib.vertices[3 * size_t(idx.vertex_index) + 1];
                 tinyobj::real_t vz = attrib.vertices[3 * size_t(idx.vertex_index) + 2];
 
-                vertices.push_back({ glm::vec3{vx, vy, vz} });
+                tinyobj::real_t tx = 0.0f;
+                tinyobj::real_t ty = 0.0f;
+                if (idx.texcoord_index >= 0) {
+                    tx = attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
+                    ty = attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
+                }
+
+
+                vertices.push_back({ glm::vec3{vx, vy, vz}, glm::vec2{tx, ty} });
                 centroid += vertices.back().pos;
                 perMaterialIndices[materialID].push_back(index);
                 ++index;
@@ -64,6 +77,22 @@ void hamoodModel::loadModel(const std::string& modelFilePath) {
         }
 
     }
+
+    for (size_t m = 0; m < tinyMaterials.size(); ++m) {
+        material mat{};
+        auto& diffuse = tinyMaterials[m].diffuse;
+        //auto& opacity = tinyMaterials[m].dissolve;
+        mat.diffuse = glm::vec4{ diffuse[0], diffuse[1], diffuse[2], -1 };
+        std::string fullTexturePath = modelParentDir + '\\' + tinyMaterials[m].diffuse_texname;
+        diffuseTextureNames[fullTexturePath].push_back(m);
+        materials.emplace_back(mat);
+    }
+
+    material defaultMat{};
+    defaultMat.diffuse = glm::vec4(0.5f, 0.5f, 0.5f, -1);
+    materials.emplace_back(defaultMat);
+
+    //std::cout << "materials size: " << materials.size() << std::endl;
 
     centroid /= vertices.size();
 
@@ -77,7 +106,7 @@ void hamoodModel::loadModel(const std::string& modelFilePath) {
         mesh.indexOffset = uint32_t(indices.size());
         mesh.indexCount = uint32_t(x.second.size());
         mesh.materialIndex = x.first;
-
+        //std::cout << "mesh index: " << x.first << std::endl;
         indices.insert(indices.end(), x.second.begin(), x.second.end());
 
         meshes.emplace_back(mesh);
