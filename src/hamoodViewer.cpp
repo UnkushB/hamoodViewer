@@ -11,11 +11,12 @@ void hamoodViewer::run() {
     buffers.createCameraUBO();
     buffers.createMaterialUBO();
     buffers.createDiffuseTextures(model.diffuseTexturePaths, model.materials);
+    buffers.createFrameBuffers();
+    buffers.createFrameBufferTextures(myWindow.windowWidth, myWindow.windowHeight);
+    buffers.createQuadVAO();
     shaders.createShaderProgram();
     cam.createCam(glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 5.0f, 0.0f, 0.0f);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     mainLoop();
 }
 
@@ -31,6 +32,10 @@ void hamoodViewer::mainLoop() {
             buffers.createDiffuseTextures(model.diffuseTexturePaths, model.materials);
             myWindow.reloadModel = false;
         }
+        if (myWindow.resized) {
+            buffers.createFrameBufferTextures(myWindow.windowWidth, myWindow.windowHeight);
+            myWindow.resized = false;
+        }
         draw();
     }
 
@@ -38,6 +43,10 @@ void hamoodViewer::mainLoop() {
 }
 
 void hamoodViewer::draw() {
+    glBindFramebuffer(GL_FRAMEBUFFER, buffers.opaqueFBO);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -77,6 +86,19 @@ void hamoodViewer::draw() {
             // glBindTexture(GL_TEXTURE_2D, 0);
         glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mesh.indexOffset * sizeof(uint32_t)));
     }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glUseProgram(shaders.quadID);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glBindVertexArray(buffers.quadVAO);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, buffers.opaqueTexture);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
 
     glfwSwapBuffers(myWindow.window);
 

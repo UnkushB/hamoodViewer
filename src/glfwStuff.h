@@ -7,6 +7,7 @@ public:
     GLFWwindow* window = nullptr;
     int windowWidth = 1000; int windowHeight = 800;
     void initGLFW();
+    bool resized = false;
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
     bool leftButtonDown = false;

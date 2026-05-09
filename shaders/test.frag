@@ -22,7 +22,7 @@ void main(){
     if(diffuseHasOpacity >= 0)
         finalOpacity = texture(diffuseTexture, texCoord).a;
 
-    if(finalOpacity < 0.1)
+    if(finalOpacity < 0.9)
         discard;
     fragColor = vec4(diffuseColor, finalOpacity);
 }

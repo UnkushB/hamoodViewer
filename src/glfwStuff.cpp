@@ -41,6 +41,7 @@ void hamoodWindow::framebufferResizeCallback(GLFWwindow* window, int width, int 
     app->windowWidth = width;
     app->windowHeight = height;
     glViewport(0, 0, width, height);
+    app->resized = true;
 }
 
 void hamoodWindow::cursorPositionCallback(GLFWwindow* window, double xpos, double ypos) {

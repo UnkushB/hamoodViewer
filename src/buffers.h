@@ -22,4 +22,13 @@ public:
 
     std::vector<unsigned int> diffuseTextures;
     void createDiffuseTextures(std::unordered_map<std::string, std::vector<int>>& texturePaths, std::vector<hamoodMaterial>& materials);
+
+    unsigned int opaqueFBO = 0;
+    void createFrameBuffers();
+
+    unsigned int opaqueTexture = 0, depthTexture = 0;
+    void createFrameBufferTextures(int width, int height);
+
+    unsigned int quadVAO = 0, quadVBO = 0;
+    void createQuadVAO();
 };

@@ -40,6 +40,30 @@ void hamoodBuffers::createIndexBuffer(std::vector<uint32_t>& indices) {
     //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 };
 
+void hamoodBuffers::createQuadVAO() {
+    float quadVertices[] = {
+        // positions		// uv
+        -1.0f, -1.0f, 0.0f,	0.0f, 0.0f,
+         1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+         1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+
+         1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+        -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+        -1.0f, -1.0f, 0.0f, 0.0f, 0.0f
+    };
+
+    glGenVertexArrays(1, &quadVAO);
+    glGenBuffers(1, &quadVBO);
+    glBindVertexArray(quadVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glBindVertexArray(0);
+}
+
 void hamoodBuffers::createCameraUBO() {
     //if (!glIsBuffer(cameraUBO))
     if (cameraUBO == 0)
@@ -129,4 +153,29 @@ void hamoodBuffers::createDiffuseTextures(std::unordered_map<std::string, std::v
         stbi_image_free(data);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
+}
+
+void hamoodBuffers::createFrameBuffers() {
+    glGenFramebuffers(1, &opaqueFBO);
+}
+
+void hamoodBuffers::createFrameBufferTextures(int width, int height) {
+    if (opaqueTexture == 0) {
+        glGenTextures(1, &opaqueTexture);
+        glGenTextures(1, &depthTexture);
+    }
+    glBindTexture(GL_TEXTURE_2D, opaqueTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_HALF_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glBindTexture(GL_TEXTURE_2D, depthTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, opaqueFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, opaqueTexture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
