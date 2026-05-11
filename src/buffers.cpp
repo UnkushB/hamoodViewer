@@ -6,7 +6,7 @@
 
 void hamoodBuffers::createVertexBuffer(std::vector<vertex>& vertices) {
     //if (!glIsVertexArray(VAO)) {
-    if (VAO == 0) {
+    if (!glIsVertexArray(VAO)) {
         glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
     }
@@ -28,7 +28,7 @@ void hamoodBuffers::createVertexBuffer(std::vector<vertex>& vertices) {
 
 void hamoodBuffers::createIndexBuffer(std::vector<uint32_t>& indices) {
     //if (!glIsBuffer(EBO))
-    if (EBO == 0)
+    if (!glIsBuffer(EBO))
         glGenBuffers(1, &EBO);
 
     glBindVertexArray(VAO);
@@ -66,14 +66,13 @@ void hamoodBuffers::createQuadVAO() {
 
 void hamoodBuffers::createCameraUBO() {
     //if (!glIsBuffer(cameraUBO))
-    if (cameraUBO == 0)
-        glGenBuffers(1, &cameraUBO);
+   // if (cameraUBO == 0)
+    glGenBuffers(1, &cameraUBO);
 
     glBindBuffer(GL_UNIFORM_BUFFER, cameraUBO);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(cameraTransformations), nullptr, GL_DYNAMIC_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, cameraUBO);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
 }
 
 void hamoodBuffers::updateCameraUBO(cameraTransformations& camTransforms) {
@@ -83,7 +82,7 @@ void hamoodBuffers::updateCameraUBO(cameraTransformations& camTransforms) {
 }
 
 void hamoodBuffers::createMaterialUBO() {
-    if (materialUBO == 0)
+    if (!glIsBuffer(materialUBO))
         glGenBuffers(1, &materialUBO);
 
     glBindBuffer(GL_UNIFORM_BUFFER, materialUBO);
@@ -146,7 +145,7 @@ void hamoodBuffers::createDiffuseTextures(std::unordered_map<std::string, std::v
 
         for (auto& matIndex : p.second) {
             materials[matIndex].diffuseTextureIndex = textureIndex;
-            materials[matIndex].diffuseHasOpacity = 1;
+            materials[matIndex].diffuseHasOpacity = hasOpacity;
         }
 
         ++textureIndex;
@@ -157,15 +156,22 @@ void hamoodBuffers::createDiffuseTextures(std::unordered_map<std::string, std::v
 
 void hamoodBuffers::createFrameBuffers() {
     glGenFramebuffers(1, &opaqueFBO);
+    glGenFramebuffers(1, &transparentFBO);
+    zeroFillerVec = glm::vec4(0.0f);
+    oneFillerVec = glm::vec4(1.0f);
+    // transparentDrawBuffers.push_back(GL_COLOR_ATTACHMENT0);
+     //transparentDrawBuffers.push_back(GL_COLOR_ATTACHMENT1);
 }
 
 void hamoodBuffers::createFrameBufferTextures(int width, int height) {
-    if (opaqueTexture == 0) {
+    if (!glIsTexture(opaqueTexture)) {
         glGenTextures(1, &opaqueTexture);
         glGenTextures(1, &depthTexture);
+        glGenTextures(1, &accumTexture);
+        glGenTextures(1, &revealTexture);
     }
     glBindTexture(GL_TEXTURE_2D, opaqueTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_HALF_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_HALF_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -176,6 +182,31 @@ void hamoodBuffers::createFrameBufferTextures(int width, int height) {
     glBindFramebuffer(GL_FRAMEBUFFER, opaqueFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, opaqueTexture, 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "ERROR::FRAMEBUFFER:: Opaque framebuffer is not complete!" << std::endl;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    glBindTexture(GL_TEXTURE_2D, accumTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_HALF_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glBindTexture(GL_TEXTURE_2D, revealTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, width, height, 0, GL_RED, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, transparentFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, accumTexture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, revealTexture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
+    glDrawBuffers(2, transparentDrawBuffers);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "ERROR::FRAMEBUFFER:: transparent framebuffer is not complete!" << std::endl;
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

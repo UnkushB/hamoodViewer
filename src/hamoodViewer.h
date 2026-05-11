@@ -7,11 +7,11 @@
 
 class hamoodViewer {
 public:
-    hamoodWindow myWindow;
-    hamoodModel model;
-    hamoodBuffers buffers;
-    orbit_cam cam;
-    hamoodShaders shaders;
+    hamoodWindow myWindow{};
+    hamoodModel model{};
+    hamoodBuffers buffers{};
+    orbit_cam cam{};
+    hamoodShaders shaders{};
     void run();
 
     void mainLoop();

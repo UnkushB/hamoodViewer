@@ -1,11 +1,15 @@
 #include "orbitcam.h"
+#include <iostream>
 
 void orbit_cam::createCam(const glm::vec3& center, const glm::vec3& up, float radius, float x_angle, float y_angle) {
     this->center = center; this->world_up = up; this->radius = radius;
     this->x_angle = x_angle; this->y_angle = y_angle;
+    full_circle = 2.0f * glm::pi<float>();
+    y_cap = glm::pi<float>() / 2.0f - 0.001f;
 };
 
 void orbit_cam::rotate_x(const float radians) {
+
     x_angle += radians;
 
     x_angle = std::fmod(x_angle, full_circle);
@@ -51,5 +55,5 @@ glm::mat4 orbit_cam::get_view_matrix() {
     glm::vec3 right = glm::normalize(glm::cross(forward, world_up));
     glm::vec3 cam_up = glm::normalize(glm::cross(right, forward));
 
-    return glm::lookAt(eye, glm::vec3(0.0f), cam_up);
+    return glm::lookAt(eye, center, cam_up);
 };

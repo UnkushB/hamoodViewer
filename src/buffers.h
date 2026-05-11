@@ -1,4 +1,5 @@
 #pragma once
+#include <glad/gl.h>
 #include "model.h"
 
 struct cameraTransformations {
@@ -23,10 +24,15 @@ public:
     std::vector<unsigned int> diffuseTextures;
     void createDiffuseTextures(std::unordered_map<std::string, std::vector<int>>& texturePaths, std::vector<hamoodMaterial>& materials);
 
-    unsigned int opaqueFBO = 0;
+    unsigned int opaqueFBO = 0, transparentFBO = 0;
     void createFrameBuffers();
 
-    unsigned int opaqueTexture = 0, depthTexture = 0;
+    GLenum transparentDrawBuffers[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+    //std::vector<GLenum> transparentDrawBuffers;
+    glm::vec4 zeroFillerVec;
+    glm::vec4 oneFillerVec;
+
+    unsigned int opaqueTexture = 0, depthTexture = 0, accumTexture = 0, revealTexture = 0;
     void createFrameBufferTextures(int width, int height);
 
     unsigned int quadVAO = 0, quadVBO = 0;

@@ -1,10 +1,13 @@
 #include <glad/gl.h>
 #include "hamoodViewer.h"
 #include <iostream>
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 void hamoodViewer::run() {
     myWindow.initGLFW();
+    shaders.createShaderProgram();
     model.loadModel(model.defaultModel);
     buffers.createVertexBuffer(model.vertices);
     buffers.createIndexBuffer(model.indices);
@@ -14,7 +17,7 @@ void hamoodViewer::run() {
     buffers.createFrameBuffers();
     buffers.createFrameBufferTextures(myWindow.windowWidth, myWindow.windowHeight);
     buffers.createQuadVAO();
-    shaders.createShaderProgram();
+
     cam.createCam(glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 5.0f, 0.0f, 0.0f);
 
     mainLoop();
@@ -23,7 +26,7 @@ void hamoodViewer::run() {
 
 void hamoodViewer::mainLoop() {
     while (!glfwWindowShouldClose(myWindow.window)) {
-        glfwPollEvents();
+
         if (myWindow.reloadModel) {
             model.loadModel(myWindow.windowsFile.lpstrFile);
             buffers.createVertexBuffer(model.vertices);
@@ -43,15 +46,6 @@ void hamoodViewer::mainLoop() {
 }
 
 void hamoodViewer::draw() {
-    glBindFramebuffer(GL_FRAMEBUFFER, buffers.opaqueFBO);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glUseProgram(shaders.shaderID);
-
     cam.changeRadius(myWindow.scrollOffset);
     myWindow.scrollOffset = 0.0f;
 
@@ -62,7 +56,7 @@ void hamoodViewer::draw() {
     cam.rotate_y(myWindow.pitch);
     glm::mat4 viewMatrix = cam.get_view_matrix();
     glm::mat4 projMatrix = glm::perspective(glm::radians(90.0f), static_cast<float>(myWindow.windowWidth) / static_cast<float>(myWindow.windowHeight), 0.1f, 100.0f);
-
+    //std::cout << glm::to_string(viewMatrix) << std::endl;
     cameraTransformations camMatrixs;
     camMatrixs.model = modelTransform;
     camMatrixs.view = viewMatrix;
@@ -73,6 +67,15 @@ void hamoodViewer::draw() {
 
     buffers.updateCameraUBO(camMatrixs);
 
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+    glClearColor(0.2f, 0.3f, 0.3f, 0.0f);
+    glBindFramebuffer(GL_FRAMEBUFFER, buffers.opaqueFBO);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glUseProgram(shaders.shaderID);
 
     glBindVertexArray(buffers.VAO);
     for (auto& mesh : model.meshes) {
@@ -87,12 +90,59 @@ void hamoodViewer::draw() {
         glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mesh.indexOffset * sizeof(uint32_t)));
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glDepthMask(GL_FALSE);
+    glEnable(GL_BLEND);
+    glBlendFunci(0, GL_ONE, GL_ONE);
+    glBlendFunci(1, GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+    glBlendEquation(GL_FUNC_ADD);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, buffers.transparentFBO);
+    GLenum bufs[] = {
+    GL_COLOR_ATTACHMENT0,
+    GL_COLOR_ATTACHMENT1
+    };
+
+    glDrawBuffers(2, bufs);
+    glClearBufferfv(GL_COLOR, 0, &buffers.zeroFillerVec[0]);
+    glClearBufferfv(GL_COLOR, 1, &buffers.oneFillerVec[0]);
+
+    glUseProgram(shaders.transparentID);
+
+    glBindVertexArray(buffers.VAO);
+    for (auto& mesh : model.meshes) {
+        hamoodMaterial& curMaterial = model.materials[mesh.materialIndex];
+        buffers.updateMaterialUBO(curMaterial);
+        glActiveTexture(GL_TEXTURE0);
+        if (curMaterial.diffuseTextureIndex != -1) {
+            glBindTexture(GL_TEXTURE_2D, buffers.diffuseTextures[curMaterial.diffuseTextureIndex]);
+        }
+        // else
+            // glBindTexture(GL_TEXTURE_2D, 0);
+        glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mesh.indexOffset * sizeof(uint32_t)));
+    }
+
+    glDepthFunc(GL_ALWAYS);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, buffers.opaqueFBO);
+
+    glUseProgram(shaders.compositeID);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, buffers.accumTexture);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, buffers.revealTexture);
+    glBindVertexArray(buffers.quadVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+
     glUseProgram(shaders.quadID);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     glBindVertexArray(buffers.quadVAO);
     glActiveTexture(GL_TEXTURE0);
@@ -101,5 +151,6 @@ void hamoodViewer::draw() {
 
 
     glfwSwapBuffers(myWindow.window);
+    glfwPollEvents();
 
 }

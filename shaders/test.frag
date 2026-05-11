@@ -1,4 +1,4 @@
-#version 330 core
+#version 430 core
 
 out vec4 fragColor;
 
@@ -22,7 +22,7 @@ void main(){
     if(diffuseHasOpacity >= 0)
         finalOpacity = texture(diffuseTexture, texCoord).a;
 
-    if(finalOpacity < 0.9)
+    if(finalOpacity < 0.95)
         discard;
-    fragColor = vec4(diffuseColor, finalOpacity);
+    fragColor = vec4(diffuseColor, 1.0f);
 }

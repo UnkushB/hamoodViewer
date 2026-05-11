@@ -5,11 +5,9 @@ project(hamoodViewer VERSION 0.1)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_DEPENDS_USE_COMPILER FALSE)
 
 find_package(OpenGL REQUIRED)
-
-add_library(glad dependencies/glad/gl.c)
-target_include_directories(glad PUBLIC dependencies)
 
 include(FetchContent)
 
@@ -53,13 +51,13 @@ add_executable(hamoodViewer main.cpp
                 src/model.cpp
                 src/buffers.cpp
                 src/orbitcam.cpp
-                src/shaders.cpp)
+                src/shaders.cpp
+                 dependencies/glad/gl.c)
 
 target_include_directories(hamoodViewer PUBLIC dependencies)
 
 target_link_libraries(hamoodViewer
     OpenGL::GL
-    glad
     glfw
     glm
     assimp)   

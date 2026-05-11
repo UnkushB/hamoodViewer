@@ -9,8 +9,8 @@ public:
     float radius;
     float x_angle;
     float y_angle;
-    const float full_circle = 2.0f * glm::pi<float>();
-    const float y_cap = glm::pi<float>() / 2.0f - 0.001f;
+    float full_circle;
+    float y_cap;
     void createCam(const glm::vec3& center, const glm::vec3& up, float radius, float x_angle, float y_angle);
 
     void rotate_x(const float radians);

@@ -16,7 +16,7 @@ struct hamoodMesh {
     int materialIndex;
 };
 
-struct hamoodMaterial {
+struct alignas(16) hamoodMaterial {
     glm::vec3 diffuse;
     float opacity;
     int diffuseTextureIndex = -1;
