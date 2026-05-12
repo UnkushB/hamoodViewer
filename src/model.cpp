@@ -64,6 +64,17 @@ void hamoodModel::loadModel(const std::string& modelFilePath) {
 }
 
 void hamoodModel::processNode(aiNode* node, const aiScene* scene, glm::mat4 accumTransforms) {
+    aiMatrix4x4& tempTransform = node->mTransformation;
+
+    glm::mat4 transform{
+     { tempTransform.a1, tempTransform.b1, tempTransform.c1, tempTransform.d1 },
+     { tempTransform.a2, tempTransform.b2, tempTransform.c2, tempTransform.d2 },
+     { tempTransform.a3, tempTransform.b3, tempTransform.c3, tempTransform.d3 },
+     { tempTransform.a4, tempTransform.b4, tempTransform.c4, tempTransform.d4 }
+    };
+
+    accumTransforms = accumTransforms * transform;
+
     for (unsigned int i = 0; i < node->mNumMeshes; ++i) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 
@@ -82,7 +93,8 @@ void hamoodModel::processNode(aiNode* node, const aiScene* scene, glm::mat4 accu
                 textureCoords.y = mesh->mTextureCoords[0][vertexIndex].y;
             }
 
-            vertices.push_back({ glm::vec3{vertexCoords.x, vertexCoords.y, vertexCoords.z}, textureCoords });
+            //vertices.push_back({ glm::vec3{vertexCoords.x, vertexCoords.y, vertexCoords.z}, textureCoords });
+            vertices.push_back({ glm::vec3(accumTransforms * glm::vec4{vertexCoords.x, vertexCoords.y, vertexCoords.z, 1.0f}), textureCoords });
             centroid += vertices.back().pos;
         }
 

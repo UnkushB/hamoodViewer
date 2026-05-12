@@ -1,9 +1,7 @@
 #include <glad/gl.h>
 #include "hamoodViewer.h"
 #include <iostream>
-#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/string_cast.hpp>
 
 void hamoodViewer::run() {
     myWindow.initGLFW();
@@ -71,7 +69,7 @@ void hamoodViewer::draw() {
     glDepthFunc(GL_LESS);
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
-    glClearColor(0.2f, 0.3f, 0.3f, 0.0f);
+    glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
     glBindFramebuffer(GL_FRAMEBUFFER, buffers.opaqueFBO);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -97,12 +95,12 @@ void hamoodViewer::draw() {
     glBlendEquation(GL_FUNC_ADD);
 
     glBindFramebuffer(GL_FRAMEBUFFER, buffers.transparentFBO);
-    GLenum bufs[] = {
+    /*GLenum bufs[] = {
     GL_COLOR_ATTACHMENT0,
     GL_COLOR_ATTACHMENT1
-    };
+    };*/
 
-    glDrawBuffers(2, bufs);
+    //glDrawBuffers(2, buffers.transparentDrawBuffers);
     glClearBufferfv(GL_COLOR, 0, &buffers.zeroFillerVec[0]);
     glClearBufferfv(GL_COLOR, 1, &buffers.oneFillerVec[0]);
 

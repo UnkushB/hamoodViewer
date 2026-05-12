@@ -1,5 +1,4 @@
 #include "buffers.h"
-#include <glad/gl.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include <iostream>
@@ -70,7 +69,7 @@ void hamoodBuffers::createCameraUBO() {
     glGenBuffers(1, &cameraUBO);
 
     glBindBuffer(GL_UNIFORM_BUFFER, cameraUBO);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(cameraTransformations), nullptr, GL_DYNAMIC_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(cameraTransformations), nullptr, GL_STATIC_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, cameraUBO);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
@@ -170,6 +169,10 @@ void hamoodBuffers::createFrameBufferTextures(int width, int height) {
         glGenTextures(1, &accumTexture);
         glGenTextures(1, &revealTexture);
     }
+
+    if (width <= 0 || height <= 0)
+        return;
+
     glBindTexture(GL_TEXTURE_2D, opaqueTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_HALF_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

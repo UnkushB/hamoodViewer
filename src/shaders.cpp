@@ -144,6 +144,11 @@ void hamoodShaders::createShaderProgram() {
     glLinkProgram(compositeID);
     checkCompileErrors(compositeID, "composite");
 
+    glUseProgram(0);
+
+    glDeleteShader(vertex);
+    glDeleteShader(fragment);
+
     const char* quadVertexShaderCode = quadVertexShaderString.c_str();
     const char* quadFragmentShaderCode = quadFragmentShaderString.c_str();
 
