@@ -3,6 +3,7 @@
 #include "model.h"
 
 struct cameraTransformations {
+    glm::vec4 camPos;
     glm::mat4 model;
     glm::mat4 view;
     glm::mat4 projections;

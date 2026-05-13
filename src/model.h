@@ -6,6 +6,7 @@
 struct vertex {
     glm::vec3 pos;
     glm::vec2 uv;
+    glm::vec3 normal;
 };
 
 struct hamoodMesh {
@@ -20,9 +21,11 @@ struct hamoodMesh {
 struct alignas(16) hamoodMaterial {
     glm::vec3 diffuse;
     float opacity;
+    float metallic;
+    float roughness;
     int diffuseTextureIndex = -1;
     int diffuseHasOpacity = -1;
-    int padding[2];
+    int padding[3];
 };
 
 class hamoodModel {

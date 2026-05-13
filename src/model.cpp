@@ -48,6 +48,18 @@ void hamoodModel::loadModel(const std::string& modelFilePath) {
             opacity = 1.0f;
         tempMat.opacity = opacity;
 
+        float metallic;
+        if (mat.Get(AI_MATKEY_METALLIC_FACTOR, metallic) != AI_SUCCESS) {
+            metallic = 0.0f;
+        }
+        tempMat.metallic = metallic;
+
+        float roughness;
+        if (mat.Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness) != AI_SUCCESS) {
+            roughness = 1.0f;
+        }
+        tempMat.roughness = roughness;
+
         materials.emplace_back(tempMat);
     }
 
@@ -94,8 +106,8 @@ void hamoodModel::processNode(aiNode* node, const aiScene* scene, glm::mat4 accu
                 textureCoords.x = mesh->mTextureCoords[0][vertexIndex].x;
                 textureCoords.y = mesh->mTextureCoords[0][vertexIndex].y;
             }
-
-            vertices.push_back({ glm::vec3{vertexCoords.x, vertexCoords.y, vertexCoords.z}, textureCoords });
+            aiVector3D& normal = mesh->mNormals[vertexIndex];
+            vertices.push_back({ glm::vec3{vertexCoords.x, vertexCoords.y, vertexCoords.z}, textureCoords , glm::vec3{normal.x, normal.y, normal.z} });
             //vertices.push_back({ glm::vec3(accumTransforms * glm::vec4{vertexCoords.x, vertexCoords.y, vertexCoords.z, 1.0f}), textureCoords });
             glm::vec4 pos = accumTransforms * glm::vec4{ vertexCoords.x, vertexCoords.y, vertexCoords.z, 1.0f };
             //centroid += vertices.back().pos;

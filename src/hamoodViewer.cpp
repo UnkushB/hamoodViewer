@@ -59,6 +59,7 @@ void hamoodViewer::draw() {
     camMatrixs.model = modelTransform;
     camMatrixs.view = viewMatrix;
     camMatrixs.projections = projMatrix;
+    camMatrixs.camPos = glm::vec4(cam.get_eye(), 1.0f);
 
     myWindow.yaw = 0.0f;
     myWindow.pitch = 0.0f;
