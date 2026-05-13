@@ -74,7 +74,7 @@ void hamoodWindow::mouseButtonCallback(GLFWwindow* window, int button, int actio
 void hamoodWindow::keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     auto app = reinterpret_cast<hamoodWindow*>(glfwGetWindowUserPointer(window));
     if (key == GLFW_KEY_A && action == GLFW_PRESS) {
-        WINBOOL result = GetOpenFileNameA(&app->windowsFile);
+        BOOL result = GetOpenFileNameA(&app->windowsFile);
         if (result) {
             app->reloadModel = true;
         }

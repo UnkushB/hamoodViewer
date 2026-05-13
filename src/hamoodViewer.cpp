@@ -15,7 +15,7 @@ void hamoodViewer::run() {
     buffers.createFrameBuffers();
     buffers.createFrameBufferTextures(myWindow.windowWidth, myWindow.windowHeight);
     buffers.createQuadVAO();
-
+    glEnable(GL_FRAMEBUFFER_SRGB);
     cam.createCam(glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 5.0f, 0.0f, 0.0f);
 
     mainLoop();
@@ -75,8 +75,11 @@ void hamoodViewer::draw() {
 
     glUseProgram(shaders.shaderID);
 
+    unsigned int transformLoc = glGetUniformLocation(shaders.shaderID, "localTransform");
+
     glBindVertexArray(buffers.VAO);
     for (auto& mesh : model.meshes) {
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(mesh.localTransform));
         hamoodMaterial& curMaterial = model.materials[mesh.materialIndex];
         buffers.updateMaterialUBO(curMaterial);
         glActiveTexture(GL_TEXTURE0);
@@ -106,9 +109,12 @@ void hamoodViewer::draw() {
 
     glUseProgram(shaders.transparentID);
 
+    transformLoc = glGetUniformLocation(shaders.transparentID, "localTransform");
+
     glBindVertexArray(buffers.VAO);
     for (auto& mesh : model.meshes) {
         hamoodMaterial& curMaterial = model.materials[mesh.materialIndex];
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(mesh.localTransform));
         buffers.updateMaterialUBO(curMaterial);
         glActiveTexture(GL_TEXTURE0);
         if (curMaterial.diffuseTextureIndex != -1) {

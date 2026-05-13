@@ -9,7 +9,9 @@ layout(std140) uniform cameraTransformations {
 };
 out vec2 texCoord;
 
+uniform mat4 localTransform;
+
 void main(){
-    gl_Position =  projection * view * model *  vec4(pos, 1.0f);
+    gl_Position =  projection * view * model * localTransform * vec4(pos, 1.0f);
     texCoord = uv;
 }

@@ -13,6 +13,7 @@ struct hamoodMesh {
     uint32_t indexCount;
     uint32_t vertexOffset;
     uint32_t vertexCount;
+    glm::mat4 localTransform;
     int materialIndex;
 };
 
