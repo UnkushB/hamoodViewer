@@ -11,5 +11,11 @@ uniform sampler2D screen;
 
 void main()
 {
-	frag = vec4(texture(screen, texture_coords).rgb, 1.0f);
+	vec3 hdrColor = (texture(screen, texture_coords).rgb);
+
+	vec3 mapped = hdrColor / (hdrColor + vec3(1.0));
+
+	 frag = vec4(mapped, 1.0);
+
+	 //frag = vec4((texture(screen, texture_coords).rgb), 1.0);
 }

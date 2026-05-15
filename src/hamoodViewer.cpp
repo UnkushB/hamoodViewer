@@ -11,12 +11,15 @@ void hamoodViewer::run() {
     buffers.createIndexBuffer(model.indices);
     buffers.createCameraUBO();
     buffers.createMaterialUBO();
+    buffers.loadRadianceTexture();
     buffers.createDiffuseTextures(model.diffuseTexturePaths, model.materials);
     buffers.createFrameBuffers();
     buffers.createFrameBufferTextures(myWindow.windowWidth, myWindow.windowHeight);
     buffers.createQuadVAO();
+    buffers.createCubeVAO();
     glEnable(GL_FRAMEBUFFER_SRGB);
     cam.createCam(glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 5.0f, 0.0f, 0.0f);
+    buffers.createEnvCubeMap(shaders.cubemapID, shaders.convolutionID);
 
     mainLoop();
 }
@@ -44,6 +47,7 @@ void hamoodViewer::mainLoop() {
 }
 
 void hamoodViewer::draw() {
+    glViewport(0, 0, myWindow.windowWidth, myWindow.windowHeight);
     cam.changeRadius(myWindow.scrollOffset);
     myWindow.scrollOffset = 0.0f;
 
@@ -75,7 +79,8 @@ void hamoodViewer::draw() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glUseProgram(shaders.shaderID);
-
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, buffers.irradianceMap);
     unsigned int transformLoc = glGetUniformLocation(shaders.shaderID, "localTransform");
 
     glBindVertexArray(buffers.VAO);
@@ -91,6 +96,18 @@ void hamoodViewer::draw() {
             // glBindTexture(GL_TEXTURE_2D, 0);
         glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mesh.indexOffset * sizeof(uint32_t)));
     }
+
+    glDepthFunc(GL_LEQUAL);
+    glDepthMask(GL_FALSE);
+    /*glUseProgram(shaders.cubemapID);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, buffers.radianceTexture);*/
+    glUseProgram(shaders.skyboxID);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, buffers.irradianceMap);
+    glBindVertexArray(buffers.cubeVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
 
     glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
@@ -109,7 +126,8 @@ void hamoodViewer::draw() {
     glClearBufferfv(GL_COLOR, 1, &buffers.oneFillerVec[0]);
 
     glUseProgram(shaders.transparentID);
-
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, buffers.irradianceMap);
     transformLoc = glGetUniformLocation(shaders.transparentID, "localTransform");
 
     glBindVertexArray(buffers.VAO);
@@ -140,6 +158,7 @@ void hamoodViewer::draw() {
     glBindTexture(GL_TEXTURE_2D, buffers.revealTexture);
     glBindVertexArray(buffers.quadVAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);
+
 
 
     glUseProgram(shaders.quadID);

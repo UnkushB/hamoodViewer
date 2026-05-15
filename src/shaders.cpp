@@ -55,6 +55,11 @@ void hamoodShaders::createShaderProgram() {
     std::string transparentFragmentString = readShaderCode("shaders/transparent.fs");
     std::string compositeVertexString = readShaderCode("shaders/composite.vs");
     std::string compositeFragmentString = readShaderCode("shaders/composite.fs");
+    std::string cubemapVertexString = readShaderCode("shaders/cubemap.vs");
+    std::string cubemapFragmentString = readShaderCode("shaders/cubemap.fs");
+    std::string skyBoxVertexString = readShaderCode("shaders/skybox.vs");
+    std::string skyBoxFragmentString = readShaderCode("shaders/skybox.fs");
+    std::string convolutionFragmentString = readShaderCode("shaders/convolute.fs");
 
     const char* vertexShaderCode = vertexShaderCodeString.c_str();
     const char* fragmentShaderCode = fragmentShaderCodeString.c_str();
@@ -85,6 +90,39 @@ void hamoodShaders::createShaderProgram() {
     glUniformBlockBinding(shaderID, materialIndex, 1);
 
     glUniform1i(glGetUniformLocation(shaderID, "diffuseTexture"), 0);
+
+    glUniform1i(glGetUniformLocation(shaderID, "irradianceMap"), 1);
+
+    glUseProgram(0);
+
+    glDeleteShader(vertex);
+    glDeleteShader(fragment);
+
+    const char* cubemapVertexCode = cubemapVertexString.c_str();
+    const char* cubemapFragmentCode = cubemapFragmentString.c_str();
+
+    vertex = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertex, 1, &cubemapVertexCode, nullptr);
+    glCompileShader(vertex);
+    checkCompileErrors(vertex, "cubemapVS");
+
+    fragment = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment, 1, &cubemapFragmentCode, NULL);
+    glCompileShader(fragment);
+    checkCompileErrors(fragment, "cubemapFS");
+
+    cubemapID = glCreateProgram();
+    glAttachShader(cubemapID, vertex);
+    glAttachShader(cubemapID, fragment);
+    glLinkProgram(cubemapID);
+    checkCompileErrors(cubemapID, "cubemap");
+
+    glUseProgram(cubemapID);
+
+    cameraTransformsIndex = glGetUniformBlockIndex(cubemapID, "cameraTransformations");
+    glUniformBlockBinding(cubemapID, cameraTransformsIndex, 0);
+
+    glUniform1i(glGetUniformLocation(cubemapID, "equirectangularMap"), 0);
 
     glUseProgram(0);
 
@@ -120,6 +158,8 @@ void hamoodShaders::createShaderProgram() {
 
     glUniform1i(glGetUniformLocation(transparentID, "diffuseTexture"), 0);
 
+    glUniform1i(glGetUniformLocation(transparentID, "irradianceMap"), 1);
+
     glUseProgram(0);
 
     glDeleteShader(vertex);
@@ -146,6 +186,66 @@ void hamoodShaders::createShaderProgram() {
 
     glUseProgram(0);
 
+    glDeleteShader(vertex);
+    glDeleteShader(fragment);
+
+    const char* skyBoxVertexCode = skyBoxVertexString.c_str();
+    const char* skyBoxFragmentCode = skyBoxFragmentString.c_str();
+
+    vertex = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertex, 1, &skyBoxVertexCode, nullptr);
+    glCompileShader(vertex);
+    checkCompileErrors(vertex, "skyboxVS");
+
+    fragment = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment, 1, &skyBoxFragmentCode, NULL);
+    glCompileShader(fragment);
+    checkCompileErrors(fragment, "skyboxFS");
+
+    skyboxID = glCreateProgram();
+    glAttachShader(skyboxID, vertex);
+    glAttachShader(skyboxID, fragment);
+    glLinkProgram(skyboxID);
+    checkCompileErrors(skyboxID, "skybox");
+
+    glUseProgram(skyboxID);
+
+    cameraTransformsIndex = glGetUniformBlockIndex(skyboxID, "cameraTransformations");
+    glUniformBlockBinding(skyboxID, cameraTransformsIndex, 0);
+
+    glUniform1i(glGetUniformLocation(skyboxID, "environmentMap"), 0);
+
+    glUseProgram(0);
+
+    glDeleteShader(vertex);
+    glDeleteShader(fragment);
+
+    const char* convolutionFragmentCode = convolutionFragmentString.c_str();
+
+    vertex = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertex, 1, &cubemapVertexCode, nullptr);
+    glCompileShader(vertex);
+    checkCompileErrors(vertex, "cubemapVS");
+
+    fragment = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment, 1, &convolutionFragmentCode, NULL);
+    glCompileShader(fragment);
+    checkCompileErrors(fragment, "convolutionFS");
+
+    convolutionID = glCreateProgram();
+    glAttachShader(convolutionID, vertex);
+    glAttachShader(convolutionID, fragment);
+    glLinkProgram(convolutionID);
+    checkCompileErrors(convolutionID, "convolution");
+
+    glUseProgram(convolutionID);
+
+    cameraTransformsIndex = glGetUniformBlockIndex(convolutionID, "cameraTransformations");
+    glUniformBlockBinding(convolutionID, cameraTransformsIndex, 0);
+
+    glUniform1i(glGetUniformLocation(convolutionID, "environmentMap"), 0);
+
+    glUseProgram(0);
     glDeleteShader(vertex);
     glDeleteShader(fragment);
 

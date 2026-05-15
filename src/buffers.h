@@ -22,6 +22,10 @@ public:
     void createMaterialUBO();
     void updateMaterialUBO(hamoodMaterial& material);
 
+    unsigned int radianceTexture = 0, envCubeMap = 0, irradianceMap = 0;
+    void loadRadianceTexture();
+    void createEnvCubeMap(unsigned int cubemapID, unsigned int convoluteID);
+
     std::vector<unsigned int> diffuseTextures;
     void createDiffuseTextures(std::unordered_map<std::string, std::vector<int>>& texturePaths, std::vector<hamoodMaterial>& materials);
 
@@ -38,4 +42,7 @@ public:
 
     unsigned int quadVAO = 0, quadVBO = 0;
     void createQuadVAO();
+
+    unsigned int cubeVAO = 0, cubeVBO = 0;
+    void createCubeVAO();
 };
