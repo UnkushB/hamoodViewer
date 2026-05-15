@@ -176,9 +176,13 @@ void hamoodBuffers::loadRadianceTexture() {
     stbi_set_flip_vertically_on_load(true);
     int width, height, nrComponents;
     //float* data = stbi_loadf("images/studiovibrantcolors.hdr", &width, &height, &nrComponents, 0);
-    float* data = stbi_loadf("images/skybox.hdr", &width, &height, &nrComponents, 0);
+    //float* data = stbi_loadf("images/skybox.hdr", &width, &height, &nrComponents, 0);
     //float* data = stbi_loadf("images/dancing_hall_4k.hdr", &width, &height, &nrComponents, 0);
     //float* data = stbi_loadf("images/monkstown_castle_4k.hdr", &width, &height, &nrComponents, 0);
+    //float* data = stbi_loadf("images/cayley_interior_4k.hdr", &width, &height, &nrComponents, 0);
+    //float* data = stbi_loadf("images/metro_noord_4k.hdr", &width, &height, &nrComponents, 0);
+    float* data = stbi_loadf("images/studio_small_09_4k.hdr", &width, &height, &nrComponents, 0);
+
 
     if (!data) {
         std::cout << "failed to load radiance texture\n";
@@ -190,13 +194,14 @@ void hamoodBuffers::loadRadianceTexture() {
     /*for (int i = 0; i < width * height * nrComponents; ++i) {
         data[i] = std::min(data[i], max);
     }*/
+    float min = 0.5f;
 
     for (int i = 0; i < width * height; ++i) {
         float& r = data[i * nrComponents + 0];
         float& g = data[i * nrComponents + 1];
         float& b = data[i * nrComponents + 2];
 
-        float brightness = (0.22 * r) + (0.72 * g) + (0.1 * b);
+        float brightness = (0.22 * r) + (0.72 * g) + (0.07 * b);
 
         if (brightness > max) {
             float scale = max / brightness;
@@ -205,6 +210,7 @@ void hamoodBuffers::loadRadianceTexture() {
             g *= scale;
             b *= scale;
         }
+
     }
 
     glGenTextures(1, &radianceTexture);

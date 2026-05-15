@@ -50,13 +50,13 @@ void hamoodModel::loadModel(const std::string& modelFilePath) {
 
         float metallic;
         if (mat.Get(AI_MATKEY_METALLIC_FACTOR, metallic) != AI_SUCCESS) {
-            metallic = 0.0f;
+            metallic = 0.2f;
         }
         tempMat.metallic = metallic;
 
         float roughness;
         if (mat.Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness) != AI_SUCCESS) {
-            roughness = 1.0f;
+            roughness = 0.9f;
         }
         tempMat.roughness = roughness;
 

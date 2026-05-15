@@ -23,7 +23,7 @@ uniform sampler2D brdfLUT;
 uniform sampler2D diffuseTexture;
 
 vec3 lightPos = vec3(0.0, 15.0, 0.0);
-vec3 lightPositions[4] = {vec3(0.0, 10.0, 0.0), vec3(0.0, -10.0, 0.0), vec3(-10.0, 0.0, 0.0), vec3(10.0, 0.0, 0.0)};
+vec3 lightPositions[3] = { vec3( 6.0,  8.0,  6.0), vec3(-6.0,  4.0,  8.0), vec3( 4.0,  5.0, -8.0)};
 vec3 lightColor = vec3(300.0f);
 const float PI = 3.14159265359;
 // ----------------------------------------------------------------------------
@@ -80,8 +80,10 @@ void main(){
     if(finalOpacity >= 0.95)
         discard;
 
-  float metallic = min(Metallic, 0.95);
-    float roughness = max(Roughness, 0.05);
+//float metallic = min(Metallic, 0.95);
+    //float roughness = max(Roughness, 0.05);
+    float metallic = Metallic;
+    float roughness = Roughness;
 
     vec3 N = normalize(Norm);
     vec3 V = normalize(camP - worldPos);
@@ -95,7 +97,7 @@ void main(){
     // reflectance equation
     vec3 Lo = vec3(0.0);
     // calculate per-light radiance
-    for(int i = 0; i < 1; ++i){
+    for(int i = 0; i < 3; ++i){
     //vec3 L = normalize(lightPos - worldPos);
         vec3 L = normalize(lightPositions[i] - worldPos);
         vec3 H = normalize(V + L);
@@ -107,7 +109,7 @@ void main(){
     // Cook-Torrance BRDF
     float NDF = DistributionGGX(N, H, roughness);   
     float G   = GeometrySmith(N, V, L, roughness);      
-    vec3 F    = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0, roughness);
+    vec3 F    = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0, 0.0);
         
     vec3 numerator    = NDF * G * F; 
     float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
@@ -148,6 +150,8 @@ void main(){
 
     float weight = clamp(pow(min(1.0, finalOpacity * 10.0) + 0.01, 3.0) * 1e2 * 
                          pow(1.0 - gl_FragCoord.z * 0.9, 3.0), 1e-2, 3e3);
+
+    //float weight = finalOpacity * max(0.01, 3000 * pow(1.0 - gl_FragCoord.z, 3.0));
 
     // store pixel color accumulation
     accum = vec4(color * finalOpacity, finalOpacity) * weight;
