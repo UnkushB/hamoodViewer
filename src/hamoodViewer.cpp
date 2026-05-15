@@ -111,7 +111,7 @@ void hamoodViewer::draw() {
     glBindTexture(GL_TEXTURE_2D, buffers.radianceTexture);*/
     glUseProgram(shaders.skyboxID);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, buffers.prefilterMap);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, buffers.envCubeMap);
     glBindVertexArray(buffers.cubeVAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glBindVertexArray(0);

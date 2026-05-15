@@ -175,11 +175,36 @@ void hamoodBuffers::updateMaterialUBO(hamoodMaterial& material) {
 void hamoodBuffers::loadRadianceTexture() {
     stbi_set_flip_vertically_on_load(true);
     int width, height, nrComponents;
-    float* data = stbi_loadf("images/studiovibrantcolors.hdr", &width, &height, &nrComponents, 0);
+    //float* data = stbi_loadf("images/studiovibrantcolors.hdr", &width, &height, &nrComponents, 0);
+    float* data = stbi_loadf("images/skybox.hdr", &width, &height, &nrComponents, 0);
+    //float* data = stbi_loadf("images/dancing_hall_4k.hdr", &width, &height, &nrComponents, 0);
+    //float* data = stbi_loadf("images/monkstown_castle_4k.hdr", &width, &height, &nrComponents, 0);
 
     if (!data) {
         std::cout << "failed to load radiance texture\n";
         return;
+    }
+
+    float max = 100.0f;
+
+    /*for (int i = 0; i < width * height * nrComponents; ++i) {
+        data[i] = std::min(data[i], max);
+    }*/
+
+    for (int i = 0; i < width * height; ++i) {
+        float& r = data[i * nrComponents + 0];
+        float& g = data[i * nrComponents + 1];
+        float& b = data[i * nrComponents + 2];
+
+        float brightness = (0.22 * r) + (0.72 * g) + (0.1 * b);
+
+        if (brightness > max) {
+            float scale = max / brightness;
+
+            r *= scale;
+            g *= scale;
+            b *= scale;
+        }
     }
 
     glGenTextures(1, &radianceTexture);
@@ -201,7 +226,7 @@ void hamoodBuffers::createEnvCubeMap(unsigned int cubemapID, unsigned int convol
 
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 2048, 2048);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 4096, 4096);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, captureRBO);
 
     glGenTextures(1, &envCubeMap);
@@ -209,7 +234,7 @@ void hamoodBuffers::createEnvCubeMap(unsigned int cubemapID, unsigned int convol
     for (unsigned int i = 0; i < 6; ++i)
     {
         // note that we store each face with 16 bit floating point values
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 2048, 2048, 0, GL_RGB, GL_FLOAT, nullptr);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 4096, 4096, 0, GL_RGB, GL_FLOAT, nullptr);
     }
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -237,7 +262,7 @@ void hamoodBuffers::createEnvCubeMap(unsigned int cubemapID, unsigned int convol
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, radianceTexture);
     glBindVertexArray(cubeVAO);
-    glViewport(0, 0, 2048, 2048); // don't forget to configure the viewport to the capture dimensions.
+    glViewport(0, 0, 4096, 4096); // don't forget to configure the viewport to the capture dimensions.
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     for (unsigned int i = 0; i < 6; ++i)
     {
@@ -259,7 +284,7 @@ void hamoodBuffers::createEnvCubeMap(unsigned int cubemapID, unsigned int convol
     glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
     for (unsigned int i = 0; i < 6; ++i)
     {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 128, 128, 0, GL_RGB, GL_FLOAT, nullptr);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 218, 218, 0, GL_RGB, GL_FLOAT, nullptr);
     }
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -276,8 +301,8 @@ void hamoodBuffers::createEnvCubeMap(unsigned int cubemapID, unsigned int convol
     for (unsigned int mip = 0; mip < maxMipLevels; ++mip)
     {
         // reisze framebuffer according to mip-level size.
-        unsigned int mipWidth = 128 * std::pow(0.5, mip);
-        unsigned int mipHeight = 128 * std::pow(0.5, mip);
+        unsigned int mipWidth = 218 * std::pow(0.5, mip);
+        unsigned int mipHeight = 218 * std::pow(0.5, mip);
         glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
         glViewport(0, 0, mipWidth, mipHeight);
@@ -302,7 +327,7 @@ void hamoodBuffers::createEnvCubeMap(unsigned int cubemapID, unsigned int convol
     glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
     for (unsigned int i = 0; i < 6; ++i)
     {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 128, 128, 0,
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 218, 218, 0,
             GL_RGB, GL_FLOAT, nullptr);
     }
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -312,12 +337,12 @@ void hamoodBuffers::createEnvCubeMap(unsigned int cubemapID, unsigned int convol
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 128, 128);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 218, 218);
 
     glUseProgram(convoluteID);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
-    glViewport(0, 0, 128, 128);
+    glViewport(0, 0, 218, 218);
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     glBindVertexArray(cubeVAO);
     for (unsigned int i = 0; i < 6; ++i)
