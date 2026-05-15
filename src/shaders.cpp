@@ -60,6 +60,8 @@ void hamoodShaders::createShaderProgram() {
     std::string skyBoxVertexString = readShaderCode("shaders/skybox.vs");
     std::string skyBoxFragmentString = readShaderCode("shaders/skybox.fs");
     std::string convolutionFragmentString = readShaderCode("shaders/convolute.fs");
+    std::string prefilterFragmentString = readShaderCode("shaders/prefilter.fs");
+    std::string brdfShaderFragmentString = readShaderCode("shaders/brdfShader.fs");
 
     const char* vertexShaderCode = vertexShaderCodeString.c_str();
     const char* fragmentShaderCode = fragmentShaderCodeString.c_str();
@@ -92,6 +94,10 @@ void hamoodShaders::createShaderProgram() {
     glUniform1i(glGetUniformLocation(shaderID, "diffuseTexture"), 0);
 
     glUniform1i(glGetUniformLocation(shaderID, "irradianceMap"), 1);
+
+    glUniform1i(glGetUniformLocation(shaderID, "brdfLUT"), 2);
+
+    glUniform1i(glGetUniformLocation(shaderID, "prefilterMap"), 3);
 
     glUseProgram(0);
 
@@ -159,6 +165,11 @@ void hamoodShaders::createShaderProgram() {
     glUniform1i(glGetUniformLocation(transparentID, "diffuseTexture"), 0);
 
     glUniform1i(glGetUniformLocation(transparentID, "irradianceMap"), 1);
+
+    glUniform1i(glGetUniformLocation(transparentID, "brdfLUT"), 2);
+
+    glUniform1i(glGetUniformLocation(transparentID, "prefilterMap"), 3);
+
 
     glUseProgram(0);
 
@@ -249,6 +260,37 @@ void hamoodShaders::createShaderProgram() {
     glDeleteShader(vertex);
     glDeleteShader(fragment);
 
+    const char* prefilterFragmentCode = prefilterFragmentString.c_str();
+
+    vertex = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertex, 1, &cubemapVertexCode, nullptr);
+    glCompileShader(vertex);
+    checkCompileErrors(vertex, "cubemapVS");
+
+    fragment = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment, 1, &prefilterFragmentCode, NULL);
+    glCompileShader(fragment);
+    checkCompileErrors(fragment, "prefilterFS");
+
+    prefilterID = glCreateProgram();
+    glAttachShader(prefilterID, vertex);
+    glAttachShader(prefilterID, fragment);
+    glLinkProgram(prefilterID);
+    checkCompileErrors(prefilterID, "prefilter");
+
+    glUseProgram(prefilterID);
+
+    cameraTransformsIndex = glGetUniformBlockIndex(prefilterID, "cameraTransformations");
+    glUniformBlockBinding(prefilterID, cameraTransformsIndex, 0);
+
+    glUniform1i(glGetUniformLocation(prefilterID, "environmentMap"), 0);
+
+    glUniform1f(glGetUniformLocation(prefilterID, "roughness"), 1.0f);
+
+    glUseProgram(0);
+    glDeleteShader(vertex);
+    glDeleteShader(fragment);
+
     const char* quadVertexShaderCode = quadVertexShaderString.c_str();
     const char* quadFragmentShaderCode = quadFragmentShaderString.c_str();
 
@@ -268,6 +310,26 @@ void hamoodShaders::createShaderProgram() {
     glUseProgram(quadID);
 
     glUniform1i(glGetUniformLocation(quadID, "screen"), 0);
+
+    glUseProgram(0);
+
+    glDeleteShader(vertex);
+    glDeleteShader(fragment);
+
+    const char* brdfShaderFragmentCode = brdfShaderFragmentString.c_str();
+
+    vertex = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertex, 1, &quadVertexShaderCode, nullptr);
+    glCompileShader(vertex);
+
+    fragment = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment, 1, &brdfShaderFragmentCode, nullptr);
+    glCompileShader(fragment);
+
+    brdfShaderID = glCreateProgram();
+    glAttachShader(brdfShaderID, vertex);
+    glAttachShader(brdfShaderID, fragment);
+    glLinkProgram(brdfShaderID);
 
     glUseProgram(0);
 

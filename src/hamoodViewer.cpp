@@ -5,6 +5,8 @@
 
 void hamoodViewer::run() {
     myWindow.initGLFW();
+    glEnable(GL_FRAMEBUFFER_SRGB);
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
     shaders.createShaderProgram();
     model.loadModel(model.defaultModel);
     buffers.createVertexBuffer(model.vertices);
@@ -17,9 +19,10 @@ void hamoodViewer::run() {
     buffers.createFrameBufferTextures(myWindow.windowWidth, myWindow.windowHeight);
     buffers.createQuadVAO();
     buffers.createCubeVAO();
-    glEnable(GL_FRAMEBUFFER_SRGB);
+
+
     cam.createCam(glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 5.0f, 0.0f, 0.0f);
-    buffers.createEnvCubeMap(shaders.cubemapID, shaders.convolutionID);
+    buffers.createEnvCubeMap(shaders.cubemapID, shaders.convolutionID, shaders.prefilterID, shaders.brdfShaderID);
 
     mainLoop();
 }
@@ -82,6 +85,10 @@ void hamoodViewer::draw() {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_CUBE_MAP, buffers.irradianceMap);
     unsigned int transformLoc = glGetUniformLocation(shaders.shaderID, "localTransform");
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, buffers.brdfLUTTexture);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, buffers.prefilterMap);
 
     glBindVertexArray(buffers.VAO);
     for (auto& mesh : model.meshes) {
@@ -104,7 +111,7 @@ void hamoodViewer::draw() {
     glBindTexture(GL_TEXTURE_2D, buffers.radianceTexture);*/
     glUseProgram(shaders.skyboxID);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, buffers.irradianceMap);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, buffers.prefilterMap);
     glBindVertexArray(buffers.cubeVAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glBindVertexArray(0);
@@ -129,6 +136,10 @@ void hamoodViewer::draw() {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_CUBE_MAP, buffers.irradianceMap);
     transformLoc = glGetUniformLocation(shaders.transparentID, "localTransform");
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, buffers.brdfLUTTexture);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, buffers.prefilterMap);
 
     glBindVertexArray(buffers.VAO);
     for (auto& mesh : model.meshes) {
@@ -157,7 +168,8 @@ void hamoodViewer::draw() {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, buffers.revealTexture);
     glBindVertexArray(buffers.quadVAO);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    //glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 
 
@@ -171,7 +183,8 @@ void hamoodViewer::draw() {
     glBindVertexArray(buffers.quadVAO);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, buffers.opaqueTexture);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    //glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 
     glfwSwapBuffers(myWindow.window);

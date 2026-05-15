@@ -18,6 +18,8 @@ layout(std140) uniform material {
 };
 
 uniform samplerCube irradianceMap;
+uniform samplerCube prefilterMap;
+uniform sampler2D brdfLUT;
 uniform sampler2D diffuseTexture;
 
 vec3 lightPos = vec3(0.0, 15.0, 0.0);
@@ -83,6 +85,7 @@ void main(){
 
     vec3 N = normalize(Norm);
     vec3 V = normalize(camP - worldPos);
+    vec3 R = reflect(-V, N); 
 
     // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
     // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow)    
@@ -135,7 +138,11 @@ void main(){
     kD *= 1.0 - metallic;	  
     vec3 irradiance = texture(irradianceMap, N).rgb;
     vec3 diffuse      = irradiance * diffuseColor;
-    vec3 ambient = (kD * diffuse) * ao;
+     const float MAX_REFLECTION_LOD = 4.0;
+    vec3 prefilteredColor = textureLod(prefilterMap, R,  roughness * MAX_REFLECTION_LOD).rgb;
+    vec2 brdf  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
+    vec3 specular = prefilteredColor * (kS * brdf.x + brdf.y);
+    vec3 ambient = (kD * diffuse + specular) * ao;
 
     vec3 color = ambient + Lo; 
 
