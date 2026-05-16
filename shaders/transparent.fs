@@ -4,6 +4,7 @@ in vec2 texCoord;
 in vec3 camP;
 in vec3 Norm;
 in vec3 worldPos;
+in vec4 fragPosLightSpace;
 
 layout (location = 0) out vec4 accum;
 layout (location = 1) out float reveal;
@@ -21,6 +22,8 @@ uniform samplerCube irradianceMap;
 uniform samplerCube prefilterMap;
 uniform sampler2D brdfLUT;
 uniform sampler2D diffuseTexture;
+uniform sampler2D shadowMap;
+
 
 vec3 lightPos = vec3(0.0, 15.0, 0.0);
 vec3 lightPositions[3] = { vec3( 6.0,  8.0,  6.0), vec3(-6.0,  4.0,  8.0), vec3( 4.0,  5.0, -8.0)};
@@ -68,6 +71,39 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0, float roughness)
    //return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
+float shadowCalculation(vec4 fragPosShadow){
+    vec3 projCoords = fragPosShadow.xyz / fragPosShadow.w;
+
+    projCoords = projCoords * 0.5 + 0.5;
+
+    float closestDepth = texture(shadowMap, projCoords.xy).r;
+
+    float currentDepth = projCoords.z;
+    vec3 normal = normalize(Norm);
+    vec3 lightDir = normalize(lightPositions[0] - worldPos);
+    float bias = max(0.0025* (1.0 - dot(normal, lightDir)), 0.0025);
+    //float bias = 0.005;
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+
+       for(int x = -3; x <= 3; ++x)
+    {
+        for(int y = -3; y <= 3; ++y)
+        {
+            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+            shadow += currentDepth - bias > pcfDepth  ? 1.0 : 0.0;        
+        }    
+    }
+   shadow /= 49;
+    
+    if(projCoords.z > 1.0)
+        shadow = 0.0;
+
+        //shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+
+    return shadow;
+}
+
 void main(){
     //fragColor = vec4(0.2f, 0.5f, 0.3f, 1.0f);
     vec3 diffuseColor = diffuse;
@@ -96,6 +132,7 @@ void main(){
 
     // reflectance equation
     vec3 Lo = vec3(0.0);
+    float shadow = shadowCalculation(fragPosLightSpace); 
     // calculate per-light radiance
     for(int i = 0; i < 3; ++i){
     //vec3 L = normalize(lightPos - worldPos);
@@ -146,7 +183,7 @@ void main(){
     vec3 specular = prefilteredColor * (kS * brdf.x + brdf.y);
     vec3 ambient = (kD * diffuse + specular) * ao;
 
-    vec3 color = ambient + Lo; 
+    vec3 color = ambient + (Lo * (1.0 - shadow)); 
 
     float weight = clamp(pow(min(1.0, finalOpacity * 10.0) + 0.01, 3.0) * 1e2 * 
                          pow(1.0 - gl_FragCoord.z * 0.9, 3.0), 1e-2, 3e3);

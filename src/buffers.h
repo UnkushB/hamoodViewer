@@ -29,7 +29,7 @@ public:
     std::vector<unsigned int> diffuseTextures;
     void createDiffuseTextures(std::unordered_map<std::string, std::vector<int>>& texturePaths, std::vector<hamoodMaterial>& materials);
 
-    unsigned int opaqueFBO = 0, transparentFBO = 0;
+    unsigned int opaqueFBO = 0, transparentFBO = 0, shadowMapFBO = 0;
     void createFrameBuffers();
 
     GLenum transparentDrawBuffers[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
@@ -37,7 +37,8 @@ public:
     glm::vec4 zeroFillerVec;
     glm::vec4 oneFillerVec;
 
-    unsigned int opaqueTexture = 0, depthTexture = 0, accumTexture = 0, revealTexture = 0;
+    unsigned int shadowWidth = 4096, shadowHeight = 4096;
+    unsigned int opaqueTexture = 0, depthTexture = 0, accumTexture = 0, revealTexture = 0, shadowMap = 0;
     void createFrameBufferTextures(int width, int height);
 
     unsigned int quadVAO = 0, quadVBO = 0;

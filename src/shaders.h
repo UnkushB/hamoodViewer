@@ -4,7 +4,7 @@
 
 class hamoodShaders {
 public:
-    unsigned int shaderID, quadID, transparentID, compositeID, cubemapID, skyboxID, convolutionID, prefilterID, brdfShaderID;
+    unsigned int shaderID, quadID, transparentID, compositeID, cubemapID, skyboxID, convolutionID, prefilterID, brdfShaderID, shadowMapID;
     unsigned int localTransformLocation;
     std::string readShaderCode(std::string&& shaderPath);
     void createShaderProgram();

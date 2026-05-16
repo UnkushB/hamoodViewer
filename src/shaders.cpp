@@ -62,6 +62,8 @@ void hamoodShaders::createShaderProgram() {
     std::string convolutionFragmentString = readShaderCode("shaders/convolute.fs");
     std::string prefilterFragmentString = readShaderCode("shaders/prefilter.fs");
     std::string brdfShaderFragmentString = readShaderCode("shaders/brdfShader.fs");
+    std::string shadowMapVertexString = readShaderCode("shaders/shadowMap.vs");
+    std::string shadowMapFragmentString = readShaderCode("shaders/shadowMap.fs");
 
     const char* vertexShaderCode = vertexShaderCodeString.c_str();
     const char* fragmentShaderCode = fragmentShaderCodeString.c_str();
@@ -98,6 +100,8 @@ void hamoodShaders::createShaderProgram() {
     glUniform1i(glGetUniformLocation(shaderID, "brdfLUT"), 2);
 
     glUniform1i(glGetUniformLocation(shaderID, "prefilterMap"), 3);
+
+    glUniform1i(glGetUniformLocation(shaderID, "shadowMap"), 4);
 
     glUseProgram(0);
 
@@ -169,6 +173,8 @@ void hamoodShaders::createShaderProgram() {
     glUniform1i(glGetUniformLocation(transparentID, "brdfLUT"), 2);
 
     glUniform1i(glGetUniformLocation(transparentID, "prefilterMap"), 3);
+
+    glUniform1i(glGetUniformLocation(transparentID, "shadowMap"), 4);
 
 
     glUseProgram(0);
@@ -330,6 +336,40 @@ void hamoodShaders::createShaderProgram() {
     glAttachShader(brdfShaderID, vertex);
     glAttachShader(brdfShaderID, fragment);
     glLinkProgram(brdfShaderID);
+
+    glUseProgram(0);
+
+    glDeleteShader(vertex);
+    glDeleteShader(fragment);
+
+    const char* shadowMapVertexCode = shadowMapVertexString.c_str();
+    const char* shadowMapFragmentCode = shadowMapFragmentString.c_str();
+
+    vertex = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertex, 1, &shadowMapVertexCode, nullptr);
+    glCompileShader(vertex);
+    checkCompileErrors(vertex, "shadowMapvs");
+
+    fragment = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment, 1, &shadowMapFragmentCode, nullptr);
+    glCompileShader(fragment);
+    checkCompileErrors(fragment, "shadowMapfs");
+
+    shadowMapID = glCreateProgram();
+    glAttachShader(shadowMapID, vertex);
+    glAttachShader(shadowMapID, fragment);
+    glLinkProgram(shadowMapID);
+    checkCompileErrors(shadowMapID, "shadowMap");
+
+    glUseProgram(shadowMapID);
+
+    cameraTransformsIndex = glGetUniformBlockIndex(shadowMapID, "cameraTransformations");
+    glUniformBlockBinding(shadowMapID, cameraTransformsIndex, 0);
+
+    materialIndex = glGetUniformBlockIndex(shadowMapID, "material");
+    glUniformBlockBinding(shadowMapID, materialIndex, 1);
+
+    glUniform1i(glGetUniformLocation(shadowMapID, "diffuseTexture"), 0);
 
     glUseProgram(0);
 
