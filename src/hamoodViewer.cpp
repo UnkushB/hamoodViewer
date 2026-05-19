@@ -7,6 +7,7 @@ void hamoodViewer::run() {
     myWindow.initGLFW();
     glEnable(GL_FRAMEBUFFER_SRGB);
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+    glFrontFace(GL_CCW);
     shaders.createShaderProgram();
     model.loadModel(model.defaultModel);
     buffers.createVertexBuffer(model.vertices);
@@ -51,6 +52,8 @@ void hamoodViewer::mainLoop() {
 
 void hamoodViewer::draw() {
     glViewport(0, 0, 5000, 5000);
+    //glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
     cam.changeRadius(myWindow.scrollOffset);
     myWindow.scrollOffset = 0.0f;
 
@@ -71,7 +74,8 @@ void hamoodViewer::draw() {
     myWindow.yaw = 0.0f;
     myWindow.pitch = 0.0f;
 
-    glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 25.0f);
+    //glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 25.0f);
+    glm::mat4 lightProjection = glm::ortho(-3.0f, 3.0f, -3.0f, 3.0f, 0.1f, 25.0f);
     glm::mat4 lightView = glm::lookAt(glm::vec3(6.0, 8.0, 6.0), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     //glm::mat4 lightView = glm::lookAt(glm::vec3(2.0, 1.0, 0.0), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     cameraTransformations lightMatrixs;
@@ -108,6 +112,8 @@ void hamoodViewer::draw() {
 
     buffers.updateCameraUBO(camMatrixs);
     glViewport(0, 0, myWindow.windowWidth, myWindow.windowHeight);
+    glDisable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     glDepthMask(GL_TRUE);
@@ -143,6 +149,7 @@ void hamoodViewer::draw() {
         glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mesh.indexOffset * sizeof(uint32_t)));
     }
 
+    glDisable(GL_CULL_FACE);
     glDepthFunc(GL_LEQUAL);
     glDepthMask(GL_FALSE);
     glUseProgram(shaders.skyboxID);

@@ -16,7 +16,7 @@ void hamoodModel::loadModel(const std::string& modelFilePath) {
     radius = 0.0f;
 
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(modelFilePath, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_OptimizeMeshes);
+    const aiScene* scene = importer.ReadFile(modelFilePath, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_OptimizeMeshes | aiProcess_JoinIdenticalVertices);
 
     if (scene == nullptr)
         std::cout << "Failed to load model\n";

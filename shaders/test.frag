@@ -85,15 +85,15 @@ float shadowCalculation(vec4 fragPosShadow){
     float shadow = 0.0;
     vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
 
-       for(int x = -3; x <= 3; ++x)
+       for(int x = -1; x <= 1; ++x)
     {
-        for(int y = -3; y <= 3; ++y)
+        for(int y = -1; y <= 1; ++y)
         {
             float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
             shadow += currentDepth - bias > pcfDepth  ? 1.0 : 0.0;        
         }    
     }
-   shadow /= 49;
+   shadow /= 9;
     
     if(projCoords.z > 1.0)
         shadow = 0.0;
@@ -122,6 +122,9 @@ void main(){
     float roughness = Roughness;
 
     vec3 N = normalize(Norm);
+
+if (!gl_FrontFacing)
+    N = -N;
     vec3 V = normalize(camP - worldPos);
     vec3 R = reflect(-V, N); 
     
