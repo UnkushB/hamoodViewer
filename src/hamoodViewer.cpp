@@ -194,11 +194,9 @@ void hamoodViewer::draw() {
         glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mesh.indexOffset * sizeof(uint32_t)));
     }
 
-    glDepthFunc(GL_ALWAYS);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, buffers.opaqueFBO);
+
+    /*glBindFramebuffer(GL_FRAMEBUFFER, buffers.opaqueFBO);
 
     glUseProgram(shaders.compositeID);
 
@@ -206,6 +204,58 @@ void hamoodViewer::draw() {
     glBindTexture(GL_TEXTURE_2D, buffers.accumTexture);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, buffers.revealTexture);
+    glBindVertexArray(buffers.quadVAO);
+    //glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);*/
+    //blit textures
+
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, buffers.opaqueFBO);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffers.opaqueResolveFBO);
+
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+
+    glBlitFramebuffer(
+        0, 0, myWindow.windowWidth, myWindow.windowHeight,
+        0, 0, myWindow.windowWidth, myWindow.windowHeight,
+        GL_COLOR_BUFFER_BIT,
+        GL_NEAREST
+    );
+
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, buffers.transparentFBO);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffers.transparentResolveFBO);
+
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+
+    glBlitFramebuffer(
+        0, 0, myWindow.windowWidth, myWindow.windowHeight,
+        0, 0, myWindow.windowWidth, myWindow.windowHeight,
+        GL_COLOR_BUFFER_BIT,
+        GL_NEAREST
+    );
+
+    glReadBuffer(GL_COLOR_ATTACHMENT1);
+    glDrawBuffer(GL_COLOR_ATTACHMENT1);
+
+    glBlitFramebuffer(
+        0, 0, myWindow.windowWidth, myWindow.windowHeight,
+        0, 0, myWindow.windowWidth, myWindow.windowHeight,
+        GL_COLOR_BUFFER_BIT,
+        GL_NEAREST
+    );
+
+    glDepthFunc(GL_ALWAYS);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBindFramebuffer(GL_FRAMEBUFFER, buffers.opaqueResolveFBO);
+
+    glUseProgram(shaders.compositeID);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, buffers.accumResolveTexture);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, buffers.revealResolveTexture);
     glBindVertexArray(buffers.quadVAO);
     //glDrawArrays(GL_TRIANGLES, 0, 6);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -220,7 +270,7 @@ void hamoodViewer::draw() {
 
     glBindVertexArray(buffers.quadVAO);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, buffers.opaqueTexture);
+    glBindTexture(GL_TEXTURE_2D, buffers.opaqueResolveTexture);
     //glDrawArrays(GL_TRIANGLES, 0, 6);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
