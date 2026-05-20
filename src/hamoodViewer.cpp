@@ -35,7 +35,6 @@ void hamoodViewer::mainLoop() {
 
         if (myWindow.reloadModel) {
             model.loadModel(myWindow.windowsFile.lpstrFile);
-            std::cout << "reload start\n";
             buffers.createVertexBuffer(model.vertices);
             buffers.createIndexBuffer(model.indices);
             buffers.createMaterialUBO();
@@ -44,7 +43,6 @@ void hamoodViewer::mainLoop() {
             buffers.createNormalMapTextures(model.normalMapTexturePaths, model.materials);
             buffers.createAOTextures(model.aoTextuePaths, model.materials);
             buffers.createShadowMap();
-            std::cout << "reaload end\n";
             myWindow.reloadModel = false;
         }
         if (myWindow.resized) {
@@ -93,6 +91,63 @@ void hamoodViewer::draw() {
 
     shadowPass(lightMatrixs);
 
+    opaquePass(camMatrixs, lightProjView);
+
+    transparentPass(camMatrixs, lightProjView);
+
+    compositePass();
+
+    //display final result
+    glUseProgram(shaders.quadID);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    //glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+    glBindVertexArray(buffers.quadVAO);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, buffers.opaqueResolveTexture);
+    //glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+
+    glfwSwapBuffers(myWindow.window);
+    glfwPollEvents();
+
+}
+
+void hamoodViewer::shadowPass(cameraTransformations& lightMatrix) {
+    glViewport(0, 0, buffers.shadowWidth, buffers.shadowHeight);
+    // glEnable(GL_CULL_FACE);
+     //glCullFace(GL_FRONT);
+    buffers.updateCameraUBO(lightMatrix);
+    glBindFramebuffer(GL_FRAMEBUFFER, buffers.shadowMapFBO);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    unsigned int transformLoc = glGetUniformLocation(shaders.shadowMapID, "localTransform");
+
+    glUseProgram(shaders.shadowMapID);
+    glBindVertexArray(buffers.VAO);
+
+    for (auto& mesh : model.meshes) {
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(mesh.localTransform));
+        hamoodMaterial& curMaterial = model.materials[mesh.materialIndex];
+        buffers.updateMaterialUBO(curMaterial);
+        glActiveTexture(GL_TEXTURE0);
+        if (curMaterial.diffuseTextureIndex != -1) {
+            glBindTexture(GL_TEXTURE_2D, buffers.diffuseTextures[curMaterial.diffuseTextureIndex]);
+        }
+        // else
+            // glBindTexture(GL_TEXTURE_2D, 0);
+        glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mesh.indexOffset * sizeof(uint32_t)));
+    }
+}
+
+void hamoodViewer::opaquePass(cameraTransformations& camMatrixs, glm::mat4& lightProjView) {
     buffers.updateCameraUBO(camMatrixs);
     glViewport(0, 0, myWindow.windowWidth, myWindow.windowHeight);
     glDisable(GL_CULL_FACE);
@@ -123,25 +178,28 @@ void hamoodViewer::draw() {
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(mesh.localTransform));
         hamoodMaterial& curMaterial = model.materials[mesh.materialIndex];
         buffers.updateMaterialUBO(curMaterial);
-        glActiveTexture(GL_TEXTURE0);
         if (curMaterial.diffuseTextureIndex != -1) {
+            glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, buffers.diffuseTextures[curMaterial.diffuseTextureIndex]);
         }
-        glActiveTexture(GL_TEXTURE5);
         if (curMaterial.metallicRoughnessTextureIndex != -1) {
+            glActiveTexture(GL_TEXTURE5);
             glBindTexture(GL_TEXTURE_2D, buffers.metallicRoughnessTextures[curMaterial.metallicRoughnessTextureIndex]);
         }
-        glActiveTexture(GL_TEXTURE6);
-        if (curMaterial.hasNormalMap != -1)
+
+        if (curMaterial.hasNormalMap != -1) {
+            glActiveTexture(GL_TEXTURE6);
             glBindTexture(GL_TEXTURE_2D, buffers.normalMapTextures[curMaterial.hasNormalMap]);
-        glActiveTexture(GL_TEXTURE7);
-        if (curMaterial.aoTextureIndex != -1)
+        }
+
+        if (curMaterial.aoTextureIndex != -1) {
+            glActiveTexture(GL_TEXTURE7);
             glBindTexture(GL_TEXTURE_2D, buffers.aoMapTextures[curMaterial.aoTextureIndex]);
-        // else
-            // glBindTexture(GL_TEXTURE_2D, 0);
+        }
         glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mesh.indexOffset * sizeof(uint32_t)));
     }
 
+    //drawing sky box
     glDisable(GL_CULL_FACE);
     glDepthFunc(GL_LEQUAL);
     glDepthMask(GL_FALSE);
@@ -151,7 +209,9 @@ void hamoodViewer::draw() {
     glBindVertexArray(buffers.cubeVAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glBindVertexArray(0);
+}
 
+void hamoodViewer::transparentPass(cameraTransformations& camMatrixs, glm::mat4& lightProjView) {
     glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
     glBlendFunci(0, GL_ONE, GL_ONE);
@@ -166,37 +226,41 @@ void hamoodViewer::draw() {
     glUseProgram(shaders.transparentID);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_CUBE_MAP, buffers.irradianceMap);
-    transformLoc = glGetUniformLocation(shaders.transparentID, "localTransform");
+    unsigned int transformLoc = glGetUniformLocation(shaders.transparentID, "localTransform");
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, buffers.brdfLUTTexture);
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_CUBE_MAP, buffers.prefilterMap);
-    lightTransformLoc = glGetUniformLocation(shaders.transparentID, "lightSpaceMatrix");
+    unsigned int lightTransformLoc = glGetUniformLocation(shaders.transparentID, "lightSpaceMatrix");
     glUniformMatrix4fv(lightTransformLoc, 1, GL_FALSE, glm::value_ptr(lightProjView));
     glBindVertexArray(buffers.VAO);
     for (auto& mesh : model.meshes) {
         hamoodMaterial& curMaterial = model.materials[mesh.materialIndex];
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(mesh.localTransform));
         buffers.updateMaterialUBO(curMaterial);
-        glActiveTexture(GL_TEXTURE0);
         if (curMaterial.diffuseTextureIndex != -1) {
+            glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, buffers.diffuseTextures[curMaterial.diffuseTextureIndex]);
         }
-        glActiveTexture(GL_TEXTURE5);
+
         if (curMaterial.metallicRoughnessTextureIndex != -1) {
+            glActiveTexture(GL_TEXTURE5);
             glBindTexture(GL_TEXTURE_2D, buffers.metallicRoughnessTextures[curMaterial.metallicRoughnessTextureIndex]);
         }
-        glActiveTexture(GL_TEXTURE6);
-        if (curMaterial.hasNormalMap != -1)
+
+        if (curMaterial.hasNormalMap != -1) {
+            glActiveTexture(GL_TEXTURE6);
             glBindTexture(GL_TEXTURE_2D, buffers.normalMapTextures[curMaterial.hasNormalMap]);
-        glActiveTexture(GL_TEXTURE7);
-        if (curMaterial.aoTextureIndex != -1)
+        }
+        if (curMaterial.aoTextureIndex != -1) {
+            glActiveTexture(GL_TEXTURE7);
             glBindTexture(GL_TEXTURE_2D, buffers.aoMapTextures[curMaterial.aoTextureIndex]);
-        // else
-            // glBindTexture(GL_TEXTURE_2D, 0);
+        }
         glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mesh.indexOffset * sizeof(uint32_t)));
     }
+}
 
+void hamoodViewer::compositePass() {
     glBindFramebuffer(GL_READ_FRAMEBUFFER, buffers.opaqueFBO);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, buffers.opaqueResolveFBO);
 
@@ -247,52 +311,4 @@ void hamoodViewer::draw() {
     glBindVertexArray(buffers.quadVAO);
     //glDrawArrays(GL_TRIANGLES, 0, 6);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-    glUseProgram(shaders.quadID);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_BLEND);
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    //glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-    glBindVertexArray(buffers.quadVAO);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, buffers.opaqueResolveTexture);
-    //glDrawArrays(GL_TRIANGLES, 0, 6);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-
-    glfwSwapBuffers(myWindow.window);
-    glfwPollEvents();
-
-}
-
-void hamoodViewer::shadowPass(cameraTransformations& lightMatrix) {
-    glViewport(0, 0, buffers.shadowWidth, buffers.shadowHeight);
-    // glEnable(GL_CULL_FACE);
-     //glCullFace(GL_FRONT);
-    buffers.updateCameraUBO(lightMatrix);
-    glBindFramebuffer(GL_FRAMEBUFFER, buffers.shadowMapFBO);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-    glDepthMask(GL_TRUE);
-    glClear(GL_DEPTH_BUFFER_BIT);
-    unsigned int transformLoc = glGetUniformLocation(shaders.shadowMapID, "localTransform");
-
-    glUseProgram(shaders.shadowMapID);
-    glBindVertexArray(buffers.VAO);
-
-    for (auto& mesh : model.meshes) {
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(mesh.localTransform));
-        hamoodMaterial& curMaterial = model.materials[mesh.materialIndex];
-        buffers.updateMaterialUBO(curMaterial);
-        glActiveTexture(GL_TEXTURE0);
-        if (curMaterial.diffuseTextureIndex != -1) {
-            glBindTexture(GL_TEXTURE_2D, buffers.diffuseTextures[curMaterial.diffuseTextureIndex]);
-        }
-        // else
-            // glBindTexture(GL_TEXTURE_2D, 0);
-        glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mesh.indexOffset * sizeof(uint32_t)));
-    }
 }

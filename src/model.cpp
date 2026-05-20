@@ -28,8 +28,6 @@ void hamoodModel::loadModel(const std::string& modelFilePath) {
     centroid = glm::vec3(0.0f);
     radius = 0.0f;
 
-    std::cout << "hi\n";
-
     for (unsigned int i = 0; i < scene->mNumMaterials; ++i) {
         const aiMaterial& mat = *scene->mMaterials[i];
 

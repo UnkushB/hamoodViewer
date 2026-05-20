@@ -19,4 +19,10 @@ public:
     void draw();
 
     void shadowPass(cameraTransformations& lightMatrix);
+
+    void opaquePass(cameraTransformations& camMatrixs, glm::mat4& lightProjView);
+
+    void transparentPass(cameraTransformations& camMatrixs, glm::mat4& lightProjView);
+
+    void compositePass();
 };
