@@ -16,6 +16,9 @@ void hamoodViewer::run() {
     buffers.createMaterialUBO();
     buffers.loadRadianceTexture();
     buffers.createDiffuseTextures(model.diffuseTexturePaths, model.materials);
+    buffers.createMetallicTexture(model.metallicRoughnessTexturePaths, model.materials);
+    buffers.createNormalMapTextures(model.normalMapTexturePaths, model.materials);
+    buffers.createAOTextures(model.aoTextuePaths, model.materials);
     buffers.createFrameBuffers();
     buffers.createFrameBufferTextures(myWindow.windowWidth, myWindow.windowHeight);
     buffers.createQuadVAO();
@@ -34,10 +37,15 @@ void hamoodViewer::mainLoop() {
 
         if (myWindow.reloadModel) {
             model.loadModel(myWindow.windowsFile.lpstrFile);
+            std::cout << "reload start\n";
             buffers.createVertexBuffer(model.vertices);
             buffers.createIndexBuffer(model.indices);
             buffers.createMaterialUBO();
             buffers.createDiffuseTextures(model.diffuseTexturePaths, model.materials);
+            buffers.createMetallicTexture(model.metallicRoughnessTexturePaths, model.materials);
+            buffers.createNormalMapTextures(model.normalMapTexturePaths, model.materials);
+            buffers.createAOTextures(model.aoTextuePaths, model.materials);
+            std::cout << "reaload end\n";
             myWindow.reloadModel = false;
         }
         if (myWindow.resized) {
@@ -144,6 +152,16 @@ void hamoodViewer::draw() {
         if (curMaterial.diffuseTextureIndex != -1) {
             glBindTexture(GL_TEXTURE_2D, buffers.diffuseTextures[curMaterial.diffuseTextureIndex]);
         }
+        glActiveTexture(GL_TEXTURE5);
+        if (curMaterial.metallicRoughnessTextureIndex != -1) {
+            glBindTexture(GL_TEXTURE_2D, buffers.metallicRoughnessTextures[curMaterial.metallicRoughnessTextureIndex]);
+        }
+        glActiveTexture(GL_TEXTURE6);
+        if (curMaterial.hasNormalMap != -1)
+            glBindTexture(GL_TEXTURE_2D, buffers.normalMapTextures[curMaterial.hasNormalMap]);
+        glActiveTexture(GL_TEXTURE7);
+        if (curMaterial.aoTextureIndex != -1)
+            glBindTexture(GL_TEXTURE_2D, buffers.aoMapTextures[curMaterial.aoTextureIndex]);
         // else
             // glBindTexture(GL_TEXTURE_2D, 0);
         glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mesh.indexOffset * sizeof(uint32_t)));
@@ -154,7 +172,7 @@ void hamoodViewer::draw() {
     glDepthMask(GL_FALSE);
     glUseProgram(shaders.skyboxID);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, buffers.prefilterMap);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, buffers.irradianceMap);
     glBindVertexArray(buffers.cubeVAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glBindVertexArray(0);
@@ -189,6 +207,16 @@ void hamoodViewer::draw() {
         if (curMaterial.diffuseTextureIndex != -1) {
             glBindTexture(GL_TEXTURE_2D, buffers.diffuseTextures[curMaterial.diffuseTextureIndex]);
         }
+        glActiveTexture(GL_TEXTURE5);
+        if (curMaterial.metallicRoughnessTextureIndex != -1) {
+            glBindTexture(GL_TEXTURE_2D, buffers.metallicRoughnessTextures[curMaterial.metallicRoughnessTextureIndex]);
+        }
+        glActiveTexture(GL_TEXTURE6);
+        if (curMaterial.hasNormalMap != -1)
+            glBindTexture(GL_TEXTURE_2D, buffers.normalMapTextures[curMaterial.hasNormalMap]);
+        glActiveTexture(GL_TEXTURE7);
+        if (curMaterial.aoTextureIndex != -1)
+            glBindTexture(GL_TEXTURE_2D, buffers.aoMapTextures[curMaterial.aoTextureIndex]);
         // else
             // glBindTexture(GL_TEXTURE_2D, 0);
         glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mesh.indexOffset * sizeof(uint32_t)));

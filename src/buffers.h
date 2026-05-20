@@ -27,7 +27,14 @@ public:
     void createEnvCubeMap(unsigned int cubemapID, unsigned int convoluteID, unsigned int prefilterID, unsigned int brdfShaderID);
 
     std::vector<unsigned int> diffuseTextures;
+    std::vector<unsigned int> metallicRoughnessTextures;
+    std::vector<unsigned int> normalMapTextures;
+    std::vector<unsigned int> aoMapTextures;
     void createDiffuseTextures(std::unordered_map<std::string, std::vector<int>>& texturePaths, std::vector<hamoodMaterial>& materials);
+    void createMetallicTexture(std::unordered_map<std::string, std::vector<int>>& texturePaths, std::vector<hamoodMaterial>& materials);
+    void createNormalMapTextures(std::unordered_map<std::string, std::vector<int>>& texturePaths, std::vector<hamoodMaterial>& materials);
+    void createAOTextures(std::unordered_map<std::string, std::vector<int>>& texturePaths, std::vector<hamoodMaterial>& materials);
+
 
     unsigned int opaqueFBO = 0, transparentFBO = 0, shadowMapFBO = 0, compositeFBO = 0;
     unsigned int opaqueResolveFBO = 0, transparentResolveFBO = 0;

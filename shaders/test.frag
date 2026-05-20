@@ -7,6 +7,7 @@ in vec3 camP;
 in vec3 Norm;
 in vec3 worldPos;
 in vec4 fragPosLightSpace;
+in mat3 tbn;
 
 layout(std140) uniform material {
    vec3 diffuse;
@@ -15,6 +16,10 @@ layout(std140) uniform material {
    float Roughness;
    int hasDiffuse;
    int diffuseHasOpacity;
+   int hasMetallicRoughness;
+   int metallicRoughnessType;
+   int hasNormalMap;
+   int aoTextureIndex;
 };
 
 uniform samplerCube irradianceMap;
@@ -23,6 +28,10 @@ uniform sampler2D brdfLUT;
 uniform sampler2D diffuseTexture;
 
 uniform sampler2D shadowMap;
+
+uniform sampler2D metallicTexture;
+uniform sampler2D normalMap;
+uniform sampler2D aoMap;
 
 vec3 lightPos = vec3(0.0, 10.0, 0.0);
 vec3 lightPositions[3] = { vec3( 6.0,  8.0,  6.0), vec3(-6.0,  4.0,  8.0), vec3( 4.0,  5.0, -8.0)};
@@ -116,12 +125,31 @@ void main(){
     if(finalOpacity < 0.95)
         discard;
 
-    //float metallic = min(Metallic, 0.95);
-    //float roughness = max(Roughness, 0.05);
+    //float metallic = min(Metallic, 0.97);
+    //float roughness = max(Roughness, 0.03);
     float metallic = Metallic;
     float roughness = Roughness;
 
+   
+      if(metallicRoughnessType ==3 ){
+        metallic = texture(metallicTexture, texCoord).b;
+        roughness = texture(metallicTexture, texCoord).g;
+    }
+    else if(metallicRoughnessType == 2)
+        metallic = texture(metallicTexture, texCoord).r;
+    else if(metallicRoughnessType == 1)
+        roughness = texture(metallicTexture, texCoord).r;
+
+    if(aoTextureIndex != -1)
+        ao = texture(aoMap, texCoord).r;
+
     vec3 N = normalize(Norm);
+
+    if(hasNormalMap != -1){
+        N = texture(normalMap, texCoord).rgb;
+        N = N * 2.0 - 1.0;
+        N = normalize(tbn * N);
+    }
 
 if (!gl_FrontFacing)
     N = -N;
@@ -185,7 +213,7 @@ if (!gl_FrontFacing)
     vec3 prefilteredColor = textureLod(prefilterMap, R,  roughness * MAX_REFLECTION_LOD).rgb;
     vec2 brdf  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
     vec3 specular = prefilteredColor * (kS * brdf.x + brdf.y);
-
+    //specular = vec3(0.0);
     vec3 ambient = (kD * diffuse +specular) * ao;
     
     vec3 color = ambient + (Lo * (1.0 - shadow)); 

@@ -103,6 +103,12 @@ void hamoodShaders::createShaderProgram() {
 
     glUniform1i(glGetUniformLocation(shaderID, "shadowMap"), 4);
 
+    glUniform1i(glGetUniformLocation(shaderID, "metallicTexture"), 5);
+
+    glUniform1i(glGetUniformLocation(shaderID, "normalMap"), 6);
+
+    glUniform1i(glGetUniformLocation(shaderID, "aoMap"), 7);
+
     glUseProgram(0);
 
     glDeleteShader(vertex);
@@ -176,6 +182,11 @@ void hamoodShaders::createShaderProgram() {
 
     glUniform1i(glGetUniformLocation(transparentID, "shadowMap"), 4);
 
+    glUniform1i(glGetUniformLocation(transparentID, "metallicTexture"), 5);
+
+    glUniform1i(glGetUniformLocation(transparentID, "normalMap"), 6);
+
+    glUniform1i(glGetUniformLocation(transparentID, "aoMap"), 7);
 
     glUseProgram(0);
 

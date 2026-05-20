@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
+#include <cctype>
 
 void hamoodBuffers::createVertexBuffer(std::vector<vertex>& vertices) {
     //if (!glIsVertexArray(VAO)) {
@@ -25,6 +26,12 @@ void hamoodBuffers::createVertexBuffer(std::vector<vertex>& vertices) {
 
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, normal)));
     glEnableVertexAttribArray(2);
+
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, tangent)));
+    glEnableVertexAttribArray(3);
+
+    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), reinterpret_cast<void*>(offsetof(vertex, bitangent)));
+    glEnableVertexAttribArray(4);
 
     glBindVertexArray(0);
     //glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -232,7 +239,7 @@ void hamoodBuffers::createEnvCubeMap(unsigned int cubemapID, unsigned int convol
 
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 4096, 4096);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 2048, 2048);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, captureRBO);
 
     glGenTextures(1, &envCubeMap);
@@ -240,7 +247,7 @@ void hamoodBuffers::createEnvCubeMap(unsigned int cubemapID, unsigned int convol
     for (unsigned int i = 0; i < 6; ++i)
     {
         // note that we store each face with 16 bit floating point values
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 4096, 4096, 0, GL_RGB, GL_FLOAT, nullptr);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 2048, 2048, 0, GL_RGB, GL_FLOAT, nullptr);
     }
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -268,7 +275,7 @@ void hamoodBuffers::createEnvCubeMap(unsigned int cubemapID, unsigned int convol
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, radianceTexture);
     glBindVertexArray(cubeVAO);
-    glViewport(0, 0, 4096, 4096); // don't forget to configure the viewport to the capture dimensions.
+    glViewport(0, 0, 2048, 2048); // don't forget to configure the viewport to the capture dimensions.
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     for (unsigned int i = 0; i < 6; ++i)
     {
@@ -290,7 +297,7 @@ void hamoodBuffers::createEnvCubeMap(unsigned int cubemapID, unsigned int convol
     glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
     for (unsigned int i = 0; i < 6; ++i)
     {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 218, 218, 0, GL_RGB, GL_FLOAT, nullptr);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 512, 512, 0, GL_RGB, GL_FLOAT, nullptr);
     }
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -307,8 +314,8 @@ void hamoodBuffers::createEnvCubeMap(unsigned int cubemapID, unsigned int convol
     for (unsigned int mip = 0; mip < maxMipLevels; ++mip)
     {
         // reisze framebuffer according to mip-level size.
-        unsigned int mipWidth = 218 * std::pow(0.5, mip);
-        unsigned int mipHeight = 218 * std::pow(0.5, mip);
+        unsigned int mipWidth = 512 * std::pow(0.5, mip);
+        unsigned int mipHeight = 512 * std::pow(0.5, mip);
         glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
         glViewport(0, 0, mipWidth, mipHeight);
@@ -333,7 +340,7 @@ void hamoodBuffers::createEnvCubeMap(unsigned int cubemapID, unsigned int convol
     glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
     for (unsigned int i = 0; i < 6; ++i)
     {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 218, 218, 0,
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 32, 32, 0,
             GL_RGB, GL_FLOAT, nullptr);
     }
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -343,12 +350,12 @@ void hamoodBuffers::createEnvCubeMap(unsigned int cubemapID, unsigned int convol
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 218, 218);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 32, 32);
 
     glUseProgram(convoluteID);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
-    glViewport(0, 0, 218, 218);
+    glViewport(0, 0, 32, 32);
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     glBindVertexArray(cubeVAO);
     for (unsigned int i = 0; i < 6; ++i)
@@ -367,17 +374,17 @@ void hamoodBuffers::createEnvCubeMap(unsigned int cubemapID, unsigned int convol
 
     // pre-allocate enough memory for the LUT texture.
     glBindTexture(GL_TEXTURE_2D, brdfLUTTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, 218, 218, 0, GL_RG, GL_FLOAT, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, 64, 64, 0, GL_RG, GL_FLOAT, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 218, 218);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 64, 64);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdfLUTTexture, 0);
 
-    glViewport(0, 0, 218, 218);
+    glViewport(0, 0, 64, 64);
     glUseProgram(brdfShaderID);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBindVertexArray(quadVAO);
@@ -412,13 +419,13 @@ void hamoodBuffers::createDiffuseTextures(std::unordered_map<std::string, std::v
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         GLfloat value; /* don't exceed this value...*/
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &value);
 
         //value = (value > max_anisotropy) ? max_anisotropy : value;
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
+        //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         int hasOpacity = -1;
 
@@ -440,6 +447,209 @@ void hamoodBuffers::createDiffuseTextures(std::unordered_map<std::string, std::v
         for (auto& matIndex : p.second) {
             materials[matIndex].diffuseTextureIndex = textureIndex;
             materials[matIndex].diffuseHasOpacity = hasOpacity;
+        }
+
+        ++textureIndex;
+        stbi_image_free(data);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+}
+
+char my_tolower(char ch)
+{
+    return static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
+}
+
+std::string str_tolower(std::string s)
+{
+    std::transform(s.begin(), s.end(), s.begin(),
+        [](unsigned char c) { return std::tolower(c); } // correct
+    );
+    return s;
+}
+
+void hamoodBuffers::createMetallicTexture(std::unordered_map<std::string, std::vector<int>>& texturePaths, std::vector<hamoodMaterial>& materials) {
+    stbi_set_flip_vertically_on_load(true);
+
+    if (metallicRoughnessTextures.size() > 0) {
+        glDeleteTextures(metallicRoughnessTextures.size(), metallicRoughnessTextures.data());
+        metallicRoughnessTextures.clear();
+    }
+    int textureIndex = 0;
+
+    for (auto& p : texturePaths) {
+        int width, height, nrChannels;
+
+        unsigned char* data = stbi_load(p.first.c_str(), &width, &height, &nrChannels, 0);
+
+        if (!data) {
+            stbi_image_free(data);
+            continue;
+        }
+
+        unsigned int texture;
+        glGenTextures(1, &texture);
+
+        glBindTexture(GL_TEXTURE_2D, texture);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        GLfloat value; /* don't exceed this value...*/
+        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &value);
+
+        //value = (value > max_anisotropy) ? max_anisotropy : value;
+        //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+        if (nrChannels == 3)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        else if (nrChannels == 4) {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        }
+        else if (nrChannels == 2)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, width, height, 0, GL_RG, GL_UNSIGNED_BYTE, data);
+        else if (nrChannels == 1)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, width, height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, data);
+
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        metallicRoughnessTextures.push_back(texture);
+        std::string lowerCasePath = str_tolower(p.first);
+
+        bool hasMetal = lowerCasePath.find("metal") != std::string::npos;
+        bool hasRough = lowerCasePath.find("rough") != std::string::npos;
+
+        for (auto& matIndex : p.second) {
+            materials[matIndex].metallicRoughnessTextureIndex = textureIndex;
+            materials[matIndex].metallicRoughnessType = (hasMetal & !hasRough) ? 1 : (!hasMetal & hasRough) ? 2 : 3;
+            //std::cout << "metallic roughness texture name: " << p.first << "\n";
+            //std::cout << "added metallic roughness texture with nr channels: " << nrChannels << "\n";
+        }
+
+        ++textureIndex;
+        stbi_image_free(data);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+}
+
+void hamoodBuffers::createNormalMapTextures(std::unordered_map<std::string, std::vector<int>>& texturePaths, std::vector<hamoodMaterial>& materials) {
+    stbi_set_flip_vertically_on_load(true);
+    if (normalMapTextures.size() > 0) {
+        glDeleteTextures(normalMapTextures.size(), normalMapTextures.data());
+        normalMapTextures.clear();
+    }
+    int textureIndex = 0;
+
+    for (auto& p : texturePaths) {
+        int width, height, nrChannels;
+
+        unsigned char* data = stbi_load(p.first.c_str(), &width, &height, &nrChannels, 0);
+
+        if (!data) {
+            stbi_image_free(data);
+            continue;
+        }
+
+        unsigned int texture;
+        glGenTextures(1, &texture);
+
+        glBindTexture(GL_TEXTURE_2D, texture);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        GLfloat value; /* don't exceed this value...*/
+        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &value);
+
+        //value = (value > max_anisotropy) ? max_anisotropy : value;
+        //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+        if (nrChannels == 3)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        else if (nrChannels == 4) {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        }
+        else if (nrChannels == 2)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, width, height, 0, GL_RG, GL_UNSIGNED_BYTE, data);
+        else if (nrChannels == 1)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, width, height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, data);
+
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        normalMapTextures.push_back(texture);
+
+        for (auto& matIndex : p.second) {
+            materials[matIndex].hasNormalMap = textureIndex;
+            // std::cout << "added normal map: " << p.first << std::endl;
+        }
+
+        ++textureIndex;
+        stbi_image_free(data);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+}
+
+void hamoodBuffers::createAOTextures(std::unordered_map<std::string, std::vector<int>>& texturePaths, std::vector<hamoodMaterial>& materials) {
+    stbi_set_flip_vertically_on_load(true);
+    if (aoMapTextures.size() > 0) {
+        glDeleteTextures(aoMapTextures.size(), aoMapTextures.data());
+        aoMapTextures.clear();
+    }
+
+    std::cout << "ao textures: \n";
+
+    for (auto& p : texturePaths) {
+        std::cout << p.first << std::endl;
+    }
+    int textureIndex = 0;
+
+    for (auto& p : texturePaths) {
+        int width, height, nrChannels;
+
+        unsigned char* data = stbi_load(p.first.c_str(), &width, &height, &nrChannels, 0);
+
+        if (!data) {
+            stbi_image_free(data);
+            continue;
+        }
+
+        unsigned int texture;
+        glGenTextures(1, &texture);
+
+        glBindTexture(GL_TEXTURE_2D, texture);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        GLfloat value; /* don't exceed this value...*/
+        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &value);
+
+        //value = (value > max_anisotropy) ? max_anisotropy : value;
+        //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+        if (nrChannels == 3)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        else if (nrChannels == 4) {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        }
+        else if (nrChannels == 2)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, width, height, 0, GL_RG, GL_UNSIGNED_BYTE, data);
+        else if (nrChannels == 1)
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, width, height, 0, GL_ALPHA, GL_UNSIGNED_BYTE, data);
+
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        aoMapTextures.push_back(texture);
+
+        for (auto& matIndex : p.second) {
+            materials[matIndex].aoTextureIndex = textureIndex;
+            std::cout << "added ao texture\n";
         }
 
         ++textureIndex;

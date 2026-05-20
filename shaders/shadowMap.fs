@@ -7,6 +7,10 @@ layout(std140) uniform material {
    float Roughness;
    int hasDiffuse;
    int diffuseHasOpacity;
+   int hasMetallicRoughness;
+   int metallicRoughnessType;
+   int hasNormalMap;
+   int aoTextureIndex;
 };
 
 uniform sampler2D diffuseTexture;

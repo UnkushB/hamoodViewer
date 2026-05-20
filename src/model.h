@@ -7,6 +7,8 @@ struct vertex {
     glm::vec3 pos;
     glm::vec2 uv;
     glm::vec3 normal;
+    glm::vec3 tangent;
+    glm::vec3 bitangent;
 };
 
 struct hamoodMesh {
@@ -25,7 +27,10 @@ struct alignas(16) hamoodMaterial {
     float roughness;
     int diffuseTextureIndex = -1;
     int diffuseHasOpacity = -1;
-    int padding[3];
+    int metallicRoughnessTextureIndex = -1;
+    int metallicRoughnessType = -1; //should replace with an enum  1 is metallic, 2 is rough, 3 is metallicRough
+    int hasNormalMap = -1;
+    int aoTextureIndex = -1;
 };
 
 class hamoodModel {
@@ -36,6 +41,9 @@ public:
     std::vector<hamoodMesh> meshes;
     std::vector<hamoodMaterial> materials;
     std::unordered_map<std::string, std::vector<int>> diffuseTexturePaths;
+    std::unordered_map<std::string, std::vector<int>> metallicRoughnessTexturePaths;
+    std::unordered_map<std::string, std::vector<int>> normalMapTexturePaths;
+    std::unordered_map<std::string, std::vector<int>> aoTextuePaths;
     glm::vec3 centroid;
     float radius;
     void loadModel(const std::string& modelFilePath);

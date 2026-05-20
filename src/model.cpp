@@ -7,33 +7,89 @@
 
 void hamoodModel::loadModel(const std::string& modelFilePath) {
     std::string modelParentDir = std::filesystem::path(modelFilePath).parent_path().string();
-    vertices.clear();
-    indices.clear();
-    meshes.clear();
-    materials.clear();
-    diffuseTexturePaths.clear();
-    centroid = glm::vec3(0.0f);
-    radius = 0.0f;
+
 
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(modelFilePath, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_OptimizeMeshes | aiProcess_JoinIdenticalVertices);
+    const aiScene* scene = importer.ReadFile(modelFilePath, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_OptimizeMeshes | aiProcess_JoinIdenticalVertices | aiProcess_CalcTangentSpace);
 
     if (scene == nullptr)
         std::cout << "Failed to load model\n";
 
     glm::mat4 transforms(1.0f);
 
+    vertices.clear();
+    indices.clear();
+    meshes.clear();
+    materials.clear();
+    diffuseTexturePaths.clear();
+    metallicRoughnessTexturePaths.clear();
+    normalMapTexturePaths.clear();
+    aoTextuePaths.clear();
+    centroid = glm::vec3(0.0f);
+    radius = 0.0f;
+
+    std::cout << "hi\n";
+
     for (unsigned int i = 0; i < scene->mNumMaterials; ++i) {
         const aiMaterial& mat = *scene->mMaterials[i];
 
         hamoodMaterial tempMat{};
-
-        if (mat.GetTextureCount(aiTextureType_DIFFUSE) > 0) {
-            aiString texturePath;
+        aiString texturePath;
+        if (mat.GetTextureCount(aiTextureType_BASE_COLOR) > 0) {
+            //aiString texturePath;
+            mat.GetTexture(aiTextureType_BASE_COLOR, 0, &texturePath);
+            std::string fullTexturePath = modelParentDir + "/" + texturePath.C_Str();
+            //diffuseTextures.emplace(fullTexturePath, -1);
+            diffuseTexturePaths[fullTexturePath].push_back(i);
+            texturePath.Clear();
+        }
+        else if (mat.GetTextureCount(aiTextureType_DIFFUSE) > 0) {
+            //aiString texturePath;
             mat.GetTexture(aiTextureType_DIFFUSE, 0, &texturePath);
             std::string fullTexturePath = modelParentDir + "/" + texturePath.C_Str();
             //diffuseTextures.emplace(fullTexturePath, -1);
             diffuseTexturePaths[fullTexturePath].push_back(i);
+            texturePath.Clear();
+        }
+
+        if (mat.GetTextureCount(aiTextureType_GLTF_METALLIC_ROUGHNESS) > 0) {
+            mat.GetTexture(aiTextureType_GLTF_METALLIC_ROUGHNESS, 0, &texturePath);
+            std::string fullTexturePath = modelParentDir + "/" + texturePath.C_Str();
+            metallicRoughnessTexturePaths[fullTexturePath].push_back(i);
+            texturePath.Clear();
+        }
+
+        if (mat.GetTextureCount(aiTextureType_NORMAL_CAMERA) > 0) {
+            mat.GetTexture(aiTextureType_NORMAL_CAMERA, 0, &texturePath);
+            std::string fullTexturePath = modelParentDir + "/" + texturePath.C_Str();
+            normalMapTexturePaths[fullTexturePath].push_back(i);
+            texturePath.Clear();
+        }
+        else if (mat.GetTextureCount(aiTextureType_NORMALS) > 0) {
+            mat.GetTexture(aiTextureType_NORMALS, 0, &texturePath);
+            std::string fullTexturePath = modelParentDir + "/" + texturePath.C_Str();
+            normalMapTexturePaths[fullTexturePath].push_back(i);
+            texturePath.Clear();
+        }
+
+        if (mat.GetTextureCount(aiTextureType_LIGHTMAP) > 0)
+        {
+            mat.GetTexture(aiTextureType_LIGHTMAP, 0, &texturePath);
+            std::string fullTexturePath = modelParentDir + "/" + texturePath.C_Str();
+            aoTextuePaths[fullTexturePath].push_back(i);
+            texturePath.Clear();
+        }
+        else if (mat.GetTextureCount(aiTextureType_AMBIENT_OCCLUSION) > 0) {
+            mat.GetTexture(aiTextureType_AMBIENT_OCCLUSION, 0, &texturePath);
+            std::string fullTexturePath = modelParentDir + "/" + texturePath.C_Str();
+            aoTextuePaths[fullTexturePath].push_back(i);
+            texturePath.Clear();
+        }
+        else if (mat.GetTextureCount(aiTextureType_AMBIENT) > 0) {
+            mat.GetTexture(aiTextureType_AMBIENT, 0, &texturePath);
+            std::string fullTexturePath = modelParentDir + "/" + texturePath.C_Str();
+            aoTextuePaths[fullTexturePath].push_back(i);
+            texturePath.Clear();
         }
 
         aiColor3D diffuseColor;
@@ -107,7 +163,19 @@ void hamoodModel::processNode(aiNode* node, const aiScene* scene, glm::mat4 accu
                 textureCoords.y = mesh->mTextureCoords[0][vertexIndex].y;
             }
             aiVector3D& normal = mesh->mNormals[vertexIndex];
-            vertices.push_back({ glm::vec3{vertexCoords.x, vertexCoords.y, vertexCoords.z}, textureCoords , glm::vec3{normal.x, normal.y, normal.z} });
+            glm::vec3 tangent(0.0f);
+            glm::vec3 bitangent(0.0f);
+
+            if (mesh->HasTangentsAndBitangents())
+            {
+                aiVector3D& t = mesh->mTangents[vertexIndex];
+                aiVector3D& b = mesh->mBitangents[vertexIndex];
+
+                tangent = glm::vec3(t.x, t.y, t.z);
+                bitangent = glm::vec3(b.x, b.y, b.z);
+            }
+            //vertices.push_back({ glm::vec3{vertexCoords.x, vertexCoords.y, vertexCoords.z}, textureCoords , glm::vec3{normal.x, normal.y, normal.z}, glm::vec3{tangent.x, tangent.y, tangent.z}, glm::vec3{biTangent.x, biTangent.y, biTangent.z} });
+            vertices.push_back({ glm::vec3(vertexCoords.x, vertexCoords.y, vertexCoords.z), textureCoords, glm::vec3(normal.x, normal.y, normal.z), tangent, bitangent });
             //vertices.push_back({ glm::vec3(accumTransforms * glm::vec4{vertexCoords.x, vertexCoords.y, vertexCoords.z, 1.0f}), textureCoords });
             glm::vec4 pos = accumTransforms * glm::vec4{ vertexCoords.x, vertexCoords.y, vertexCoords.z, 1.0f };
             //centroid += vertices.back().pos;

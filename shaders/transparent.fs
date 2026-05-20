@@ -5,6 +5,7 @@ in vec3 camP;
 in vec3 Norm;
 in vec3 worldPos;
 in vec4 fragPosLightSpace;
+in mat3 tbn;
 
 layout (location = 0) out vec4 accum;
 layout (location = 1) out float reveal;
@@ -16,6 +17,10 @@ layout(std140) uniform material {
    float Roughness;
    int hasDiffuse;
    int diffuseHasOpacity;
+   int hasMetallicRoughness;
+   int metallicRoughnessType;
+   int hasNormalMap;
+   int aoTextureIndex;
 };
 
 uniform samplerCube irradianceMap;
@@ -23,7 +28,9 @@ uniform samplerCube prefilterMap;
 uniform sampler2D brdfLUT;
 uniform sampler2D diffuseTexture;
 uniform sampler2D shadowMap;
-
+uniform sampler2D metallicTexture;
+uniform sampler2D normalMap;
+uniform sampler2D aoMap;
 
 vec3 lightPos = vec3(0.0, 15.0, 0.0);
 vec3 lightPositions[3] = { vec3( 6.0,  8.0,  6.0), vec3(-6.0,  4.0,  8.0), vec3( 4.0,  5.0, -8.0)};
@@ -106,6 +113,7 @@ float shadowCalculation(vec4 fragPosShadow){
 
 void main(){
     //fragColor = vec4(0.2f, 0.5f, 0.3f, 1.0f);
+    float ao = 1.0f;
     vec3 diffuseColor = diffuse;
     float finalOpacity = opacity;
     if(hasDiffuse != -1)
@@ -121,7 +129,23 @@ void main(){
     float metallic = Metallic;
     float roughness = Roughness;
 
+      if(metallicRoughnessType ==3 ){
+        metallic = texture(metallicTexture, texCoord).b;
+        roughness = texture(metallicTexture, texCoord).g;
+    }
+    else if(metallicRoughnessType == 2)
+        metallic = texture(metallicTexture, texCoord).r;
+    else if(metallicRoughnessType == 1)
+        roughness = texture(metallicTexture, texCoord).r;
+
+if(aoTextureIndex != -1)
+        ao = texture(aoMap, texCoord).r;
     vec3 N = normalize(Norm);
+    if(hasNormalMap != -1){
+        N = texture(normalMap, texCoord).rgb;
+        N = N * 2.0 - 1.0;
+        N = normalize(tbn * N);
+    }
     if (!gl_FrontFacing)
     N = -N;
     vec3 V = normalize(camP - worldPos);
@@ -173,7 +197,7 @@ void main(){
     }
     // ambient lighting (note that the next IBL tutorial will replace 
     // this ambient lighting with environment lighting).
-    float ao = 1.0f;
+    
     vec3 kS = fresnelSchlick(max(dot(N, V), 0.0), F0, roughness);
     vec3 kD = 1.0 - kS;
     kD *= 1.0 - metallic;	  
