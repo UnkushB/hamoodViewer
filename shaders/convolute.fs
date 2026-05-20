@@ -29,8 +29,8 @@ void main()
             // tangent space to world
             vec3 sampleVec = tangentSample.x * right + tangentSample.y * up + tangentSample.z * N; 
 
-            //irradiance +=  min(texture(environmentMap, sampleVec).rgb, vec3(40000.0)) * cos(theta) * sin(theta);
-            irradiance +=  textureLod(environmentMap, sampleVec, 1.2).rgb * cos(theta) * sin(theta);
+            irradiance +=  min(texture(environmentMap, sampleVec).rgb, vec3(40000.0)) * cos(theta) * sin(theta);
+            //irradiance +=  textureLod(environmentMap, sampleVec, 1.2).rgb * cos(theta) * sin(theta);
             nrSamples++;
         }
     }

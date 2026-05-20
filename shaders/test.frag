@@ -140,8 +140,8 @@ void main(){
     else if(metallicRoughnessType == 1)
         roughness = texture(metallicTexture, texCoord).r;
 
-    if(aoTextureIndex != -1)
-        ao = texture(aoMap, texCoord).r;
+    //if(aoTextureIndex != -1)
+        //ao = texture(aoMap, texCoord).r;
 
     vec3 N = normalize(Norm);
 

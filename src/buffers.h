@@ -45,10 +45,12 @@ public:
     glm::vec4 zeroFillerVec;
     glm::vec4 oneFillerVec;
 
-    unsigned int shadowWidth = 4096, shadowHeight = 4096;
+    unsigned int shadowWidth = 2048, shadowHeight = 2048;
     unsigned int opaqueTexture = 0, depthTexture = 0, accumTexture = 0, revealTexture = 0, shadowMap = 0, compositeTexture = 0;
     unsigned int opaqueResolveTexture = 0, accumResolveTexture = 0, revealResolveTexture = 0;
     void createFrameBufferTextures(int width, int height);
+
+    void createShadowMap();
 
     unsigned int quadVAO = 0, quadVBO = 0;
     void createQuadVAO();

@@ -184,8 +184,8 @@ void hamoodBuffers::loadRadianceTexture() {
     int width, height, nrComponents;
     //float* data = stbi_loadf("images/studiovibrantcolors.hdr", &width, &height, &nrComponents, 0);
     //float* data = stbi_loadf("images/skybox.hdr", &width, &height, &nrComponents, 0);
-    float* data = stbi_loadf("images/dancing_hall_4k.hdr", &width, &height, &nrComponents, 0);
-    //float* data = stbi_loadf("images/monkstown_castle_4k.hdr", &width, &height, &nrComponents, 0);
+    //float* data = stbi_loadf("images/dancing_hall_4k.hdr", &width, &height, &nrComponents, 0);
+    float* data = stbi_loadf("images/monkstown_castle_4k.hdr", &width, &height, &nrComponents, 0);
     //float* data = stbi_loadf("images/cayley_interior_4k.hdr", &width, &height, &nrComponents, 0);
     //float* data = stbi_loadf("images/metro_noord_4k.hdr", &width, &height, &nrComponents, 0);
     //float* data = stbi_loadf("images/studio_small_09_4k.hdr", &width, &height, &nrComponents, 0);
@@ -239,7 +239,7 @@ void hamoodBuffers::createEnvCubeMap(unsigned int cubemapID, unsigned int convol
 
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 2048, 2048);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, captureRBO);
 
     glGenTextures(1, &envCubeMap);
@@ -247,7 +247,7 @@ void hamoodBuffers::createEnvCubeMap(unsigned int cubemapID, unsigned int convol
     for (unsigned int i = 0; i < 6; ++i)
     {
         // note that we store each face with 16 bit floating point values
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 2048, 2048, 0, GL_RGB, GL_FLOAT, nullptr);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 512, 512, 0, GL_RGB, GL_FLOAT, nullptr);
     }
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -275,7 +275,7 @@ void hamoodBuffers::createEnvCubeMap(unsigned int cubemapID, unsigned int convol
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, radianceTexture);
     glBindVertexArray(cubeVAO);
-    glViewport(0, 0, 2048, 2048); // don't forget to configure the viewport to the capture dimensions.
+    glViewport(0, 0, 512, 512); // don't forget to configure the viewport to the capture dimensions.
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     for (unsigned int i = 0; i < 6; ++i)
     {
@@ -297,7 +297,7 @@ void hamoodBuffers::createEnvCubeMap(unsigned int cubemapID, unsigned int convol
     glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
     for (unsigned int i = 0; i < 6; ++i)
     {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 512, 512, 0, GL_RGB, GL_FLOAT, nullptr);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 128, 128, 0, GL_RGB, GL_FLOAT, nullptr);
     }
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -314,8 +314,8 @@ void hamoodBuffers::createEnvCubeMap(unsigned int cubemapID, unsigned int convol
     for (unsigned int mip = 0; mip < maxMipLevels; ++mip)
     {
         // reisze framebuffer according to mip-level size.
-        unsigned int mipWidth = 512 * std::pow(0.5, mip);
-        unsigned int mipHeight = 512 * std::pow(0.5, mip);
+        unsigned int mipWidth = 128 * std::pow(0.5, mip);
+        unsigned int mipHeight = 128 * std::pow(0.5, mip);
         glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
         glViewport(0, 0, mipWidth, mipHeight);
@@ -354,7 +354,7 @@ void hamoodBuffers::createEnvCubeMap(unsigned int cubemapID, unsigned int convol
 
     glUseProgram(convoluteID);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, envCubeMap);
     glViewport(0, 0, 32, 32);
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     glBindVertexArray(cubeVAO);
@@ -374,17 +374,17 @@ void hamoodBuffers::createEnvCubeMap(unsigned int cubemapID, unsigned int convol
 
     // pre-allocate enough memory for the LUT texture.
     glBindTexture(GL_TEXTURE_2D, brdfLUTTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, 64, 64, 0, GL_RG, GL_FLOAT, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, 512, 512, 0, GL_RG, GL_FLOAT, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 64, 64);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdfLUTTexture, 0);
 
-    glViewport(0, 0, 64, 64);
+    glViewport(0, 0, 512, 512);
     glUseProgram(brdfShaderID);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBindVertexArray(quadVAO);
@@ -419,13 +419,15 @@ void hamoodBuffers::createDiffuseTextures(std::unordered_map<std::string, std::v
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         GLfloat value; /* don't exceed this value...*/
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &value);
 
         //value = (value > max_anisotropy) ? max_anisotropy : value;
-        //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         int hasOpacity = -1;
 
@@ -494,13 +496,15 @@ void hamoodBuffers::createMetallicTexture(std::unordered_map<std::string, std::v
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         GLfloat value; /* don't exceed this value...*/
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &value);
 
         //value = (value > max_anisotropy) ? max_anisotropy : value;
-        //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
         if (nrChannels == 3)
@@ -559,13 +563,15 @@ void hamoodBuffers::createNormalMapTextures(std::unordered_map<std::string, std:
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         GLfloat value; /* don't exceed this value...*/
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &value);
 
         //value = (value > max_anisotropy) ? max_anisotropy : value;
-        //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
         if (nrChannels == 3)
@@ -599,12 +605,6 @@ void hamoodBuffers::createAOTextures(std::unordered_map<std::string, std::vector
         glDeleteTextures(aoMapTextures.size(), aoMapTextures.data());
         aoMapTextures.clear();
     }
-
-    std::cout << "ao textures: \n";
-
-    for (auto& p : texturePaths) {
-        std::cout << p.first << std::endl;
-    }
     int textureIndex = 0;
 
     for (auto& p : texturePaths) {
@@ -624,13 +624,15 @@ void hamoodBuffers::createAOTextures(std::unordered_map<std::string, std::vector
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         GLfloat value; /* don't exceed this value...*/
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &value);
 
         //value = (value > max_anisotropy) ? max_anisotropy : value;
-        //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
         if (nrChannels == 3)
@@ -649,7 +651,6 @@ void hamoodBuffers::createAOTextures(std::unordered_map<std::string, std::vector
 
         for (auto& matIndex : p.second) {
             materials[matIndex].aoTextureIndex = textureIndex;
-            std::cout << "added ao texture\n";
         }
 
         ++textureIndex;
@@ -677,7 +678,6 @@ void hamoodBuffers::createFrameBufferTextures(int width, int height) {
         glGenTextures(1, &depthTexture);
         glGenTextures(1, &accumTexture);
         glGenTextures(1, &revealTexture);
-        glGenTextures(1, &shadowMap);
         glGenTextures(1, &compositeTexture);
         glGenTextures(1, &opaqueResolveTexture);
         glGenTextures(1, &accumResolveTexture);
@@ -700,15 +700,10 @@ void hamoodBuffers::createFrameBufferTextures(int width, int height) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, opaqueTexture);
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, width, height, 0, GL_RGBA, GL_HALF_FLOAT, NULL);
-    //glTexImage2D(GL_TEXTURE_2D_MULTISAMPLE, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_HALF_FLOAT, NULL);
     glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, GL_RGBA16F, width, height, GL_TRUE);
     glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    /*glBindTexture(GL_TEXTURE_2D, depthTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glBindTexture(GL_TEXTURE_2D, 0);*/
     glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, depthTexture);
     glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, GL_DEPTH_COMPONENT, width, height, GL_TRUE);
 
@@ -756,7 +751,6 @@ void hamoodBuffers::createFrameBufferTextures(int width, int height) {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glBindTexture(GL_TEXTURE_2D, accumResolveTexture);
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB_ALPHA, width, height, 0, GL_RGBA, GL_HALF_FLOAT, NULL);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_HALF_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -777,9 +771,14 @@ void hamoodBuffers::createFrameBufferTextures(int width, int height) {
         std::cout << "ERROR::FRAMEBUFFER:: transparent resolve framebuffer is not complete!" << std::endl;
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
 
+void hamoodBuffers::createShadowMap() {
+    if (!glIsTexture(shadowMap)) {
+        glGenTextures(1, &shadowMap);
+    }
     glBindTexture(GL_TEXTURE_2D, shadowMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, 5000, 5000, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, shadowWidth, shadowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);

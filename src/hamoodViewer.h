@@ -17,4 +17,6 @@ public:
     void mainLoop();
 
     void draw();
+
+    void shadowPass(cameraTransformations& lightMatrix);
 };
