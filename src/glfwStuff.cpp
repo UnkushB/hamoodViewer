@@ -22,6 +22,7 @@ void hamoodWindow::initGLFW() {
     glfwSetMouseButtonCallback(window, mouseButtonCallback);
     glfwSetKeyCallback(window, keyboardCallback);
     glfwSetScrollCallback(window, scrollCallback);
+    glfwSetWindowSizeLimits(window, 512, 512, GLFW_DONT_CARE, GLFW_DONT_CARE);
 
     int version = gladLoadGL(glfwGetProcAddress);
     if (version == 0) {
@@ -65,9 +66,16 @@ void hamoodWindow::mouseButtonCallback(GLFWwindow* window, int button, int actio
         if (action == GLFW_PRESS) {
             app->leftButtonDown = true;
             glfwGetCursorPos(window, &app->lastX, &app->lastY);
+            if ((app->lastX >= 42 && app->lastX <= 151) && (app->lastY >= 16 && app->lastY <= 51)) {
+                BOOL result = GetOpenFileNameA(&app->windowsFile);
+                if (result) {
+                    app->reloadModel = true;
+                }
+            }
         }
-        else if (action == GLFW_RELEASE)
+        else if (action == GLFW_RELEASE) {
             app->leftButtonDown = false;
+        }
     }
 }
 

@@ -386,5 +386,36 @@ void hamoodShaders::createShaderProgram() {
 
     glDeleteShader(vertex);
     glDeleteShader(fragment);
+
+    std::string uiVertexString(readShaderCode("shaders/ui.vs"));
+    std::string uiFragmentString(readShaderCode("shaders/ui.fs"));
+
+    const char* uiVertexCode = uiVertexString.c_str();
+    const char* uiFragmentCode = uiFragmentString.c_str();
+
+    vertex = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertex, 1, &uiVertexCode, nullptr);
+    glCompileShader(vertex);
+    checkCompileErrors(vertex, "uivs");
+
+    fragment = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment, 1, &uiFragmentCode, nullptr);
+    glCompileShader(fragment);
+    checkCompileErrors(fragment, "uifs");
+
+    uiID = glCreateProgram();
+    glAttachShader(uiID, vertex);
+    glAttachShader(uiID, fragment);
+    glLinkProgram(uiID);
+    checkCompileErrors(uiID, "ui");
+
+    glUseProgram(uiID);
+
+    glUniform1i(glGetUniformLocation(uiID, "msdfAtlas"), 0);
+
+    glUseProgram(0);
+
+    glDeleteShader(vertex);
+    glDeleteShader(fragment);
 }
 

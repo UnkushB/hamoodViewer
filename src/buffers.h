@@ -9,6 +9,25 @@ struct cameraTransformations {
     glm::mat4 projections;
 };
 
+struct uiVertex {
+    glm::vec3 pos;
+    glm::vec2 uv;
+};
+
+struct msdfCharInfo {
+    float advance;
+
+    float left;
+    float right;
+    float bottom;
+    float top;
+
+    float uvLeft;
+    float uvRight;
+    float uvBottom;
+    float uvTop;
+};
+
 class hamoodBuffers {
 public:
     unsigned int VAO = 0, VBO = 0, EBO = 0, cameraUBO = 0, materialUBO = 0;
@@ -50,10 +69,19 @@ public:
     unsigned int opaqueResolveTexture = 0, accumResolveTexture = 0, revealResolveTexture = 0;
     void createFrameBufferTextures(int width, int height);
 
+    unsigned int msdfAtlas = 0;
+    void createMSDFAtlas();
+
     void createShadowMap();
 
     unsigned int quadVAO = 0, quadVBO = 0;
     void createQuadVAO();
+
+    unsigned int uiVAO = 0, uiVBO = 0, uiEBO = 0;
+    unsigned int indexCount = 0;
+    std::unordered_map<char, msdfCharInfo> msdfChars;
+    void loadTextCharacterInfo();
+    void createUIVAO(float screenWidth, float screenHeight);
 
     unsigned int cubeVAO = 0, cubeVBO = 0;
     void createCubeVAO();

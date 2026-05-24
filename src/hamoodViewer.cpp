@@ -24,8 +24,22 @@ void hamoodViewer::run() {
     buffers.createShadowMap();
     buffers.createQuadVAO();
     buffers.createCubeVAO();
+    buffers.loadTextCharacterInfo();
+    buffers.createUIVAO(static_cast<float>(myWindow.windowWidth), static_cast<float>(myWindow.windowHeight));
     cam.createCam(glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f), 5.0f, 0.0f, 0.0f);
     buffers.createEnvCubeMap(shaders.cubemapID, shaders.convolutionID, shaders.prefilterID, shaders.brdfShaderID);
+    buffers.createMSDFAtlas();
+    modelTransform = glm::mat4(1.0f);
+    modelTransform = glm::scale(modelTransform, glm::vec3(2.0f / model.radius));
+    modelTransform = glm::translate(modelTransform, -model.centroid);
+    lightProjection = glm::ortho(-3.0f, 3.0f, -3.0f, 3.0f, 0.1f, 25.0f);
+    lightView = glm::lookAt(glm::vec3(6.0, 8.0, 6.0), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    cameraTransformations lightMatrixs;
+    lightMatrixs.model = modelTransform;
+    lightMatrixs.view = lightView;
+    lightMatrixs.projections = lightProjection;
+    lightMatrixs.camPos = glm::vec4(1.0f);
+    shadowPass(lightMatrixs);
     mainLoop();
 }
 
@@ -43,10 +57,22 @@ void hamoodViewer::mainLoop() {
             buffers.createNormalMapTextures(model.normalMapTexturePaths, model.materials);
             buffers.createAOTextures(model.aoTextuePaths, model.materials);
             buffers.createShadowMap();
+            modelTransform = glm::mat4(1.0f);
+            modelTransform = glm::scale(modelTransform, glm::vec3(2.0f / model.radius));
+            modelTransform = glm::translate(modelTransform, -model.centroid);
+            lightProjection = glm::ortho(-3.0f, 3.0f, -3.0f, 3.0f, 0.1f, 25.0f);
+            lightView = glm::lookAt(glm::vec3(6.0, 8.0, 6.0), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            cameraTransformations lightMatrixs;
+            lightMatrixs.model = modelTransform;
+            lightMatrixs.view = lightView;
+            lightMatrixs.projections = lightProjection;
+            lightMatrixs.camPos = glm::vec4(1.0f);
+            shadowPass(lightMatrixs);
             myWindow.reloadModel = false;
         }
         if (myWindow.resized) {
             buffers.createFrameBufferTextures(myWindow.windowWidth, myWindow.windowHeight);
+            buffers.createUIVAO(static_cast<float>(myWindow.windowWidth), static_cast<float>(myWindow.windowHeight));
             myWindow.resized = false;
         }
         draw();
@@ -60,9 +86,7 @@ void hamoodViewer::draw() {
     cam.changeRadius(myWindow.scrollOffset);
     myWindow.scrollOffset = 0.0f;
 
-    glm::mat4 modelTransform(1.0f);
-    modelTransform = glm::scale(modelTransform, glm::vec3(2.0f / model.radius));
-    modelTransform = glm::translate(modelTransform, -model.centroid);
+
     cam.rotate_x(myWindow.yaw);
     cam.rotate_y(myWindow.pitch);
     glm::mat4 viewMatrix = cam.get_view_matrix();
@@ -78,18 +102,9 @@ void hamoodViewer::draw() {
     myWindow.pitch = 0.0f;
 
     //glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 25.0f);
-    glm::mat4 lightProjection = glm::ortho(-3.0f, 3.0f, -3.0f, 3.0f, 0.1f, 25.0f);
-    glm::mat4 lightView = glm::lookAt(glm::vec3(6.0, 8.0, 6.0), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    //glm::mat4 lightView = glm::lookAt(glm::vec3(2.0, 1.0, 0.0), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    cameraTransformations lightMatrixs;
-    lightMatrixs.model = modelTransform;
-    lightMatrixs.view = lightView;
-    lightMatrixs.projections = lightProjection;
-    lightMatrixs.camPos = glm::vec4(1.0f);
+
 
     glm::mat4 lightProjView = lightProjection * lightView;
-
-    shadowPass(lightMatrixs);
 
     opaquePass(camMatrixs, lightProjView);
 
@@ -111,6 +126,21 @@ void hamoodViewer::draw() {
     glBindTexture(GL_TEXTURE_2D, buffers.opaqueResolveTexture);
     //glDrawArrays(GL_TRIANGLES, 0, 6);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    //do ui pass here 
+    glm::mat4 uiOrthoProj = glm::ortho(0.0f, static_cast<float>(myWindow.windowWidth), static_cast<float>(myWindow.windowHeight), 0.0f, -1.0f, 1.0f);
+    //glm::mat4 uiOrthoProj = glm::ortho(0.0f, 1920.0f, 1080.0f, 0.0f, -1.0f, 1.0f);
+    glUseProgram(shaders.uiID);
+    unsigned int transformLoc = glGetUniformLocation(shaders.uiID, "orthProj");
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(uiOrthoProj));
+    unsigned int clickedLoc = glGetUniformLocation(shaders.uiID, "clicked");
+    glUniform1i(clickedLoc, myWindow.clicked);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBindVertexArray(buffers.uiVAO);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, buffers.msdfAtlas);
+    glDrawElements(GL_TRIANGLES, buffers.indexCount, GL_UNSIGNED_INT, 0);
 
 
     glfwSwapBuffers(myWindow.window);

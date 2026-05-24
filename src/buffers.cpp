@@ -5,6 +5,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <cctype>
+#include <string>
+#include <fstream>
 
 void hamoodBuffers::createVertexBuffer(std::vector<vertex>& vertices) {
     //if (!glIsVertexArray(VAO)) {
@@ -50,6 +52,115 @@ void hamoodBuffers::createIndexBuffer(std::vector<uint32_t>& indices) {
     glBindVertexArray(0);
     //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 };
+
+void hamoodBuffers::loadTextCharacterInfo() {
+    std::string line;
+    std::ifstream msdfCSV("msdf_stuff/out.csv");
+    std::string currentFloat;
+    std::vector<float> values;
+    char first;
+    msdfCharInfo tempInfo;
+    while (std::getline(msdfCSV, line)) {
+        values.clear();
+
+        size_t i = 0;
+        while (line[i] != ',') {
+            currentFloat += line[i++];
+        }
+
+        ++i;
+        first = static_cast<char>(std::stoi(currentFloat));
+        currentFloat.clear();
+
+        for (i; i < line.size(); ++i) {
+            if (line[i] == ',') {
+                values.push_back(std::stof(currentFloat));
+                currentFloat.clear();
+                continue;
+            }
+            currentFloat += line[i];
+        }
+
+        values.push_back(std::stof(currentFloat));
+        currentFloat.clear();
+
+        tempInfo.advance = values[0];
+
+        tempInfo.left = values[1];
+        tempInfo.bottom = values[2];
+        tempInfo.right = values[3];
+        tempInfo.top = values[4];
+
+        tempInfo.uvLeft = values[5];
+        tempInfo.uvBottom = values[6];
+        tempInfo.uvRight = values[7];
+        tempInfo.uvTop = values[8];
+
+        msdfChars[first] = tempInfo;
+
+    }
+}
+
+void hamoodBuffers::createUIVAO(float screenWidth, float screenHeight) {
+    if (!glIsBuffer(uiVBO)) {
+        glGenVertexArrays(1, &uiVAO);
+        glGenBuffers(1, &uiVBO);
+        glGenBuffers(1, &uiEBO);
+    }
+
+    std::string testString = "Import";
+
+    std::vector<uiVertex> vertices;
+    std::vector<uint32_t> indices;
+    float startX = 45;
+    float startY = 17;
+    uint32_t indexOffset = 0;
+    float scale = 32.0f;
+    float scaleX = 32.0f;
+    float scaleY = 87 / 1080;
+
+    size_t fontRes = 1024;
+    for (char c : testString) {
+        msdfCharInfo& temp = msdfChars[c];
+        startY = 17;
+        startY += temp.top * scale;
+        startX -= temp.left;
+        float x1 = startX + temp.left * scale;
+        float x2 = startX + temp.right * scale;
+        float y1 = startY - temp.bottom * scale;
+        float y2 = startY - temp.top * scale;
+
+        vertices.push_back({ glm::vec3(x1, y2, 0.0f), glm::vec2((temp.uvLeft / fontRes), 1.0f - (temp.uvTop / fontRes)) });
+        vertices.push_back({ glm::vec3(x1, y1, 0.0f), glm::vec2((temp.uvLeft / fontRes), 1.0f - (temp.uvBottom / fontRes)) });
+        vertices.push_back({ glm::vec3(x2, y2, 0.0f), glm::vec2((temp.uvRight / fontRes), 1.0f - (temp.uvTop / fontRes)) });
+        vertices.push_back({ glm::vec3(x2, y1, 0.0f), glm::vec2((temp.uvRight / fontRes), 1.0f - (temp.uvBottom / fontRes)) });
+
+        indices.insert(indices.end(), { 0 + indexOffset,1 + indexOffset,3 + indexOffset,0 + indexOffset,3 + indexOffset,2 + indexOffset });
+        indexOffset += 4;
+        startX += temp.advance * scale;
+    }
+
+    startX = 17; startY = 65;
+    float endX = screenWidth * 0.93;
+    vertices.push_back({ glm::vec3{startX, startY, 0.0f}, glm::vec2(3, 3) });
+    vertices.push_back({ glm::vec3{startX, startY - 1, 0.0f}, glm::vec2(3, 3) });
+    vertices.push_back({ glm::vec3{endX - startX, startY, 0.0f}, glm::vec2(3, 3) });
+    vertices.push_back({ glm::vec3{endX - startX , startY - 1, 0.0f}, glm::vec2(3, 3) });
+    indices.insert(indices.end(), { 0 + indexOffset,1 + indexOffset,3 + indexOffset,0 + indexOffset,3 + indexOffset,2 + indexOffset });
+
+    indexCount = indices.size();
+    glBindVertexArray(uiVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, uiVBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(uiVertex), vertices.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(offsetof(uiVertex, pos)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(offsetof(uiVertex, uv)));
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, uiEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(uint32_t), indices.data(), GL_STATIC_DRAW);
+    glBindVertexArray(0);
+}
 
 void hamoodBuffers::createQuadVAO() {
     /*float quadVertices[] = {
@@ -791,4 +902,29 @@ void hamoodBuffers::createShadowMap() {
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void hamoodBuffers::createMSDFAtlas() {
+    if (!glIsTexture(msdfAtlas))
+        glGenTextures(1, &msdfAtlas);
+
+    stbi_set_flip_vertically_on_load(false);
+    int width, height, nrChannels;
+
+    unsigned char* data = stbi_load("msdf_stuff/out.png", &width, &height, &nrChannels, 0);
+
+    if (!data) {
+        stbi_image_free(data);
+        std::cout << "failed to load font atlas\n";
+    }
+
+    glBindTexture(GL_TEXTURE_2D, msdfAtlas);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    stbi_image_free(data);
 }

@@ -12,6 +12,9 @@ public:
     hamoodBuffers buffers;
     orbit_cam cam;
     hamoodShaders shaders;
+    glm::mat4 modelTransform;
+    glm::mat4 lightProjection;
+    glm::mat4 lightView;
     void run();
 
     void mainLoop();
