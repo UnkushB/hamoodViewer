@@ -12,8 +12,10 @@ void hamoodModel::loadModel(const std::string& modelFilePath) {
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(modelFilePath, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_OptimizeMeshes | aiProcess_JoinIdenticalVertices | aiProcess_CalcTangentSpace);
 
-    if (scene == nullptr)
-        std::cout << "Failed to load model\n";
+    if (!scene) {
+        scene = importer.ReadFile(defaultModel.c_str(), aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_OptimizeMeshes | aiProcess_JoinIdenticalVertices | aiProcess_CalcTangentSpace);
+        modelParentDir = std::filesystem::path(defaultModel).parent_path().string();
+    }
 
     glm::mat4 transforms(1.0f);
 
@@ -131,6 +133,7 @@ void hamoodModel::loadModel(const std::string& modelFilePath) {
 }
 
 void hamoodModel::processNode(aiNode* node, const aiScene* scene, glm::mat4 accumTransforms) {
+    //std::cout << "starting node processing: " << node->mName.C_Str() << std::endl;
     aiMatrix4x4& tempTransform = node->mTransformation;
 
     glm::mat4 transform{
@@ -160,7 +163,12 @@ void hamoodModel::processNode(aiNode* node, const aiScene* scene, glm::mat4 accu
                 textureCoords.x = mesh->mTextureCoords[0][vertexIndex].x;
                 textureCoords.y = mesh->mTextureCoords[0][vertexIndex].y;
             }
-            aiVector3D& normal = mesh->mNormals[vertexIndex];
+            glm::vec3 normal(0.0f, 1.0f, 0.0f);
+            //aiVector3D& normal = mesh->mNormals[vertexIndex];
+            if (mesh->HasNormals()) {
+                aiVector3D& n = mesh->mNormals[vertexIndex];
+                normal = glm::vec3(n.x, n.y, n.z);
+            }
             glm::vec3 tangent(0.0f);
             glm::vec3 bitangent(0.0f);
 
@@ -172,11 +180,8 @@ void hamoodModel::processNode(aiNode* node, const aiScene* scene, glm::mat4 accu
                 tangent = glm::vec3(t.x, t.y, t.z);
                 bitangent = glm::vec3(b.x, b.y, b.z);
             }
-            //vertices.push_back({ glm::vec3{vertexCoords.x, vertexCoords.y, vertexCoords.z}, textureCoords , glm::vec3{normal.x, normal.y, normal.z}, glm::vec3{tangent.x, tangent.y, tangent.z}, glm::vec3{biTangent.x, biTangent.y, biTangent.z} });
-            vertices.push_back({ glm::vec3(vertexCoords.x, vertexCoords.y, vertexCoords.z), textureCoords, glm::vec3(normal.x, normal.y, normal.z), tangent, bitangent });
-            //vertices.push_back({ glm::vec3(accumTransforms * glm::vec4{vertexCoords.x, vertexCoords.y, vertexCoords.z, 1.0f}), textureCoords });
+            vertices.push_back({ glm::vec3(vertexCoords.x, vertexCoords.y, vertexCoords.z), textureCoords, normal, tangent, bitangent });
             glm::vec4 pos = accumTransforms * glm::vec4{ vertexCoords.x, vertexCoords.y, vertexCoords.z, 1.0f };
-            //centroid += vertices.back().pos;
             centroid += glm::vec3(pos);
         }
 
@@ -186,7 +191,6 @@ void hamoodModel::processNode(aiNode* node, const aiScene* scene, glm::mat4 accu
 
             for (unsigned int index = 0; index < face.mNumIndices; ++index) {
                 indices.push_back(face.mIndices[index] + tempMesh.vertexOffset);
-                //indices.push_back(face.mIndices[index]);
             }
         }
 

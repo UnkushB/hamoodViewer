@@ -1,4 +1,4 @@
-#version 330 core
+#version 430 core
 
 // shader inputs
 layout (location = 0) in vec3 position;
@@ -13,5 +13,5 @@ void main()
 {
 	texture_coords = uv;
 
-	gl_Position = orthProj *  vec4(position, 1.0f);
+	gl_Position = orthProj *  vec4(position, 1.0);
 }

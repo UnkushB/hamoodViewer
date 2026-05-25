@@ -23,9 +23,9 @@ out vec4 fragPosLightSpace;
 out mat3 tbn;
 
 void main(){
-    gl_Position =  projection * view * model * localTransform * vec4(pos, 1.0f);
+    gl_Position =  projection * view * model * localTransform * vec4(pos, 1.0);
     texCoord = uv;
-    worldPos = vec3(model * localTransform * vec4(pos, 1.0f));
+    worldPos = vec3(model * localTransform * vec4(pos, 1.0));
     Norm = normalize(mat3(transpose(inverse(model * localTransform))) * aNorm);
     camP = vec3(camPos);
     fragPosLightSpace = lightSpaceMatrix * vec4(worldPos, 1.0);

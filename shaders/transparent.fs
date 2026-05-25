@@ -34,7 +34,7 @@ uniform sampler2D aoMap;
 
 vec3 lightPos = vec3(0.0, 15.0, 0.0);
 vec3 lightPositions[3] = { vec3( 6.0,  8.0,  6.0), vec3(-6.0,  4.0,  8.0), vec3( 4.0,  5.0, -8.0)};
-vec3 lightColor = vec3(300.0f);
+vec3 lightColor = vec3(300.0);
 const float PI = 3.14159265359;
 // ----------------------------------------------------------------------------
 float DistributionGGX(vec3 N, vec3 H, float roughness)
@@ -113,7 +113,7 @@ float shadowCalculation(vec4 fragPosShadow){
 
 void main(){
     //fragColor = vec4(0.2f, 0.5f, 0.3f, 1.0f);
-    float ao = 1.0f;
+    float ao = 1.0;
     vec3 diffuseColor = diffuse;
     float finalOpacity = opacity;
     if(hasDiffuse != -1)

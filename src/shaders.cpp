@@ -2,6 +2,7 @@
 #include <iostream>
 #include <glad/gl.h>
 #include <sstream>
+#include <filesystem>
 #include "shaders.h"
 
 void checkCompileErrors(GLuint shader, std::string type)
@@ -31,6 +32,8 @@ void checkCompileErrors(GLuint shader, std::string type)
 std::string hamoodShaders::readShaderCode(std::string&& shaderPath) {
 
     std::ifstream shaderFile(shaderPath);
+
+    std::cout << "shader file path: " << shaderPath << std::endl;
 
     if (!shaderFile.is_open()) {
         std::cout << "failed to open shader file: " << shaderPath << "\n";

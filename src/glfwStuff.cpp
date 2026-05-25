@@ -8,6 +8,7 @@ void hamoodWindow::initGLFW() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     window = glfwCreateWindow(windowWidth, windowHeight, "hamoodViewer", nullptr, nullptr);
     if (window == nullptr) {
         std::cout << "failed to create window\n";
@@ -30,8 +31,8 @@ void hamoodWindow::initGLFW() {
         return;
     }
 
-    windowsFile.lpstrFilter = "";
-    windowsFile.lpstrTitle = "Select Obj File";
+    windowsFile.lpstrFilter = "Supported Formats\0*.obj;*.gltf;*.glb\0";
+    windowsFile.lpstrTitle = "Select 3D Model";
     windowsFile.nMaxFile = sizeof(buff);
     windowsFile.lpstrFile = buff;
 }

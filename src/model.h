@@ -35,7 +35,7 @@ struct alignas(16) hamoodMaterial {
 
 class hamoodModel {
 public:
-    std::string defaultModel = "P:/learnOpenGL/models/despacito/DespacitoSpider.obj";
+    std::string defaultModel = "models/despacito/DespacitoSpider.obj";
     std::vector<vertex> vertices;
     std::vector<uint32_t> indices;
     std::vector<hamoodMesh> meshes;
