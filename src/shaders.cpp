@@ -33,8 +33,6 @@ std::string hamoodShaders::readShaderCode(std::string&& shaderPath) {
 
     std::ifstream shaderFile(shaderPath);
 
-    std::cout << "shader file path: " << shaderPath << std::endl;
-
     if (!shaderFile.is_open()) {
         std::cout << "failed to open shader file: " << shaderPath << "\n";
         return {};

@@ -22,13 +22,12 @@ uniform mat4 localTransform;
 uniform mat4 lightSpaceMatrix;
 
 void main(){
-    gl_Position =  projection * view * model * localTransform * vec4(pos, 1.0f);
     texCoord = uv;
     worldPos = vec3(model * localTransform * vec4(pos, 1.0f));
+    gl_Position =  projection * view * model * localTransform * vec4(pos, 1.0f);
     Norm = normalize(mat3(transpose(inverse(model * localTransform))) * aNorm);
     camP = vec3(camPos);
     fragPosLightSpace = lightSpaceMatrix * vec4(worldPos, 1.0);
-    //fragPosLightSpace = vec4(worldPos, 1.0);
     vec3 T = normalize(vec3(model * localTransform * vec4(aTangent,   0.0)));
    vec3 B = normalize(vec3(model * localTransform * vec4(aBitangent, 0.0)));
    vec3 N = normalize(vec3(model * localTransform * vec4(aNorm,    0.0)));

@@ -9,7 +9,6 @@
 #include <fstream>
 
 void hamoodBuffers::createVertexBuffer(std::vector<vertex>& vertices) {
-    //if (!glIsVertexArray(VAO)) {
     if (!glIsVertexArray(VAO)) {
         glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
@@ -36,11 +35,9 @@ void hamoodBuffers::createVertexBuffer(std::vector<vertex>& vertices) {
     glEnableVertexAttribArray(4);
 
     glBindVertexArray(0);
-    //glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void hamoodBuffers::createIndexBuffer(std::vector<uint32_t>& indices) {
-    //if (!glIsBuffer(EBO))
     if (!glIsBuffer(EBO))
         glGenBuffers(1, &EBO);
 
@@ -163,17 +160,6 @@ void hamoodBuffers::createUIVAO(float screenWidth, float screenHeight) {
 }
 
 void hamoodBuffers::createQuadVAO() {
-    /*float quadVertices[] = {
-        // positions		// uv
-        -1.0f, -1.0f, 0.0f,	0.0f, 0.0f,
-         1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-         1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-
-         1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-        -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-        -1.0f, -1.0f, 0.0f, 0.0f, 0.0f
-    };*/
-
     float quadVertices[] = {
         // positions        // texture Coords
         -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
@@ -309,9 +295,6 @@ void hamoodBuffers::loadRadianceTexture() {
 
     float max = 100.0f;
 
-    /*for (int i = 0; i < width * height * nrComponents; ++i) {
-        data[i] = std::min(data[i], max);
-    }*/
     float min = 0.5f;
 
     for (int i = 0; i < width * height; ++i) {
@@ -530,14 +513,12 @@ void hamoodBuffers::createDiffuseTextures(std::unordered_map<std::string, std::v
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        GLfloat value; /* don't exceed this value...*/
+        GLfloat value;
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &value);
 
-        //value = (value > max_anisotropy) ? max_anisotropy : value;
+        value = (value > max_anisotropy) ? max_anisotropy : value;
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         int hasOpacity = -1;
@@ -607,14 +588,12 @@ void hamoodBuffers::createMetallicTexture(std::unordered_map<std::string, std::v
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        GLfloat value; /* don't exceed this value...*/
+        GLfloat value;
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &value);
 
-        //value = (value > max_anisotropy) ? max_anisotropy : value;
+        value = (value > max_anisotropy) ? max_anisotropy : value;
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
@@ -639,8 +618,6 @@ void hamoodBuffers::createMetallicTexture(std::unordered_map<std::string, std::v
         for (auto& matIndex : p.second) {
             materials[matIndex].metallicRoughnessTextureIndex = textureIndex;
             materials[matIndex].metallicRoughnessType = (hasMetal & !hasRough) ? 1 : (!hasMetal & hasRough) ? 2 : 3;
-            //std::cout << "metallic roughness texture name: " << p.first << "\n";
-            //std::cout << "added metallic roughness texture with nr channels: " << nrChannels << "\n";
         }
 
         ++textureIndex;
@@ -674,14 +651,12 @@ void hamoodBuffers::createNormalMapTextures(std::unordered_map<std::string, std:
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        GLfloat value; /* don't exceed this value...*/
+        GLfloat value;
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &value);
 
-        //value = (value > max_anisotropy) ? max_anisotropy : value;
+        value = (value > max_anisotropy) ? max_anisotropy : value;
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
@@ -701,7 +676,6 @@ void hamoodBuffers::createNormalMapTextures(std::unordered_map<std::string, std:
 
         for (auto& matIndex : p.second) {
             materials[matIndex].hasNormalMap = textureIndex;
-            // std::cout << "added normal map: " << p.first << std::endl;
         }
 
         ++textureIndex;
@@ -735,14 +709,12 @@ void hamoodBuffers::createAOTextures(std::unordered_map<std::string, std::vector
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        GLfloat value; /* don't exceed this value...*/
+        GLfloat value;
         glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &value);
 
-        //value = (value > max_anisotropy) ? max_anisotropy : value;
+        value = (value > max_anisotropy) ? max_anisotropy : value;
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, value);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 

@@ -1,6 +1,5 @@
 #version 430 core
 
-// shader inputs
 layout (location = 0) in vec3 position;
 
 void main()

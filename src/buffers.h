@@ -45,6 +45,7 @@ public:
     void loadRadianceTexture();
     void createEnvCubeMap(unsigned int cubemapID, unsigned int convoluteID, unsigned int prefilterID, unsigned int brdfShaderID);
 
+    GLfloat max_anisotropy = 8.0f;
     std::vector<unsigned int> diffuseTextures;
     std::vector<unsigned int> metallicRoughnessTextures;
     std::vector<unsigned int> normalMapTextures;
@@ -60,7 +61,6 @@ public:
     void createFrameBuffers();
 
     GLenum transparentDrawBuffers[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
-    //std::vector<GLenum> transparentDrawBuffers;
     glm::vec4 zeroFillerVec;
     glm::vec4 oneFillerVec;
 

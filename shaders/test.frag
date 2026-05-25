@@ -75,7 +75,6 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 vec3 fresnelSchlick(float cosTheta, vec3 F0, float roughness)
 {
    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
-   //return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
 float shadowCalculation(vec4 fragPosShadow){
@@ -105,8 +104,6 @@ float shadowCalculation(vec4 fragPosShadow){
     
     if(projCoords.z > 1.0)
         shadow = 0.0;
-
-        //shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
 
     return shadow;
 }
@@ -150,59 +147,42 @@ void main(){
         N = normalize(tbn * N);
     }
 
-if (!gl_FrontFacing)
-    N = -N;
+    if (!gl_FrontFacing)
+        N = -N;
     vec3 V = normalize(camP - worldPos);
     vec3 R = reflect(-V, N); 
-    
-
-    // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0 
-    // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow)    
+       
     vec3 F0 = vec3(0.04); 
     F0 = mix(F0, diffuseColor, metallic);
 
-    // reflectance equation
     vec3 Lo = vec3(0.0);
-    // calculate per-light radiance
     float shadow = shadowCalculation(fragPosLightSpace); 
     for(int i = 0; i < 1; ++i){
-        //vec3 L = normalize(lightPos - worldPos);
         vec3 L = normalize(lightPositions[i] - worldPos);
         vec3 H = normalize(V + L);
 
-       // float distance = length(lightPos - worldPos);
        float distance = length(lightPositions[i] - worldPos);
         float attenuation = 1.0 / (distance * distance);
         vec3 radiance = lightColor * attenuation;
 
-        // Cook-Torrance BRDF
         float NDF = DistributionGGX(N, H, roughness);   
         float G   = GeometrySmith(N, V, L, roughness);      
         vec3 F    = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0, 0.0);
             
         vec3 numerator    = NDF * G * F; 
-        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
+        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
         vec3 specular = numerator / denominator;
-        
-        // kS is equal to Fresnel
+   
         vec3 kS = F;
-        // for energy conservation, the diffuse and specular light can't
-        // be above 1.0 (unless the surface emits light); to preserve this
-        // relationship the diffuse component (kD) should equal 1.0 - kS.
+     
         vec3 kD = vec3(1.0) - kS;
-        // multiply kD by the inverse metalness such that only non-metals 
-        // have diffuse lighting, or a linear blend if partly metal (pure metals
-        // have no diffuse light).
+      
         kD *= 1.0 - metallic;	  
 
-        // scale light by NdotL
         float NdotL = max(dot(N, L), 0.0);        
 
-        // add to outgoing radiance Lo
-        Lo += (kD * diffuseColor / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
+        Lo += (kD * diffuseColor / PI + specular) * radiance * NdotL;
     }
-    // ambient lighting (note that the next IBL tutorial will replace 
-    // this ambient lighting with environment lighting).
     vec3 kS = fresnelSchlick(max(dot(N, V), 0.0), F0, roughness);
     vec3 kD = 1.0 - kS;
     kD *= 1.0 - metallic;	  
@@ -212,11 +192,9 @@ if (!gl_FrontFacing)
     vec3 prefilteredColor = textureLod(prefilterMap, R,  roughness * MAX_REFLECTION_LOD).rgb;
     vec2 brdf  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
     vec3 specular = prefilteredColor * (kS * brdf.x + brdf.y);
-    //specular = vec3(0.0);
     vec3 ambient = (kD * diffuse +specular) * ao;
     
     vec3 color = ambient + (Lo * (1.0 - shadow)); 
 
     fragColor = vec4(color, 1.0);
-    //fragColor = vec4(diffuseColor, 1.0f);
 }

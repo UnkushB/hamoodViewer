@@ -73,6 +73,7 @@ void hamoodViewer::mainLoop() {
         if (myWindow.resized) {
             buffers.createFrameBufferTextures(myWindow.windowWidth, myWindow.windowHeight);
             buffers.createUIVAO(static_cast<float>(myWindow.windowWidth), static_cast<float>(myWindow.windowHeight));
+            glViewport(0, 0, myWindow.windowWidth, myWindow.windowHeight);
             myWindow.resized = false;
         }
         draw();
@@ -86,12 +87,10 @@ void hamoodViewer::draw() {
     cam.changeRadius(myWindow.scrollOffset);
     myWindow.scrollOffset = 0.0f;
 
-
     cam.rotate_x(myWindow.yaw);
     cam.rotate_y(myWindow.pitch);
     glm::mat4 viewMatrix = cam.get_view_matrix();
     glm::mat4 projMatrix = glm::perspective(glm::radians(90.0f), static_cast<float>(myWindow.windowWidth) / static_cast<float>(myWindow.windowHeight), 0.1f, 100.0f);
-    //std::cout << glm::to_string(viewMatrix) << std::endl;
     cameraTransformations camMatrixs;
     camMatrixs.model = modelTransform;
     camMatrixs.view = viewMatrix;
@@ -101,9 +100,6 @@ void hamoodViewer::draw() {
     myWindow.yaw = 0.0f;
     myWindow.pitch = 0.0f;
 
-    //glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 25.0f);
-
-
     glm::mat4 lightProjView = lightProjection * lightView;
 
     opaquePass(camMatrixs, lightProjView);
@@ -112,24 +108,18 @@ void hamoodViewer::draw() {
 
     compositePass();
 
-    //display final result
     glUseProgram(shaders.quadID);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    //glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
     glBindVertexArray(buffers.quadVAO);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, buffers.opaqueResolveTexture);
-    //glDrawArrays(GL_TRIANGLES, 0, 6);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-    //do ui pass here 
     glm::mat4 uiOrthoProj = glm::ortho(0.0f, static_cast<float>(myWindow.windowWidth), static_cast<float>(myWindow.windowHeight), 0.0f, -1.0f, 1.0f);
-    //glm::mat4 uiOrthoProj = glm::ortho(0.0f, 1920.0f, 1080.0f, 0.0f, -1.0f, 1.0f);
     glUseProgram(shaders.uiID);
     unsigned int transformLoc = glGetUniformLocation(shaders.uiID, "orthProj");
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(uiOrthoProj));
@@ -150,8 +140,6 @@ void hamoodViewer::draw() {
 
 void hamoodViewer::shadowPass(cameraTransformations& lightMatrix) {
     glViewport(0, 0, buffers.shadowWidth, buffers.shadowHeight);
-    // glEnable(GL_CULL_FACE);
-     //glCullFace(GL_FRONT);
     buffers.updateCameraUBO(lightMatrix);
     glBindFramebuffer(GL_FRAMEBUFFER, buffers.shadowMapFBO);
     glEnable(GL_DEPTH_TEST);
@@ -171,17 +159,13 @@ void hamoodViewer::shadowPass(cameraTransformations& lightMatrix) {
         if (curMaterial.diffuseTextureIndex != -1) {
             glBindTexture(GL_TEXTURE_2D, buffers.diffuseTextures[curMaterial.diffuseTextureIndex]);
         }
-        // else
-            // glBindTexture(GL_TEXTURE_2D, 0);
         glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, reinterpret_cast<void*>(mesh.indexOffset * sizeof(uint32_t)));
     }
+    glViewport(0, 0, myWindow.windowWidth, myWindow.windowHeight);
 }
 
 void hamoodViewer::opaquePass(cameraTransformations& camMatrixs, glm::mat4& lightProjView) {
     buffers.updateCameraUBO(camMatrixs);
-    glViewport(0, 0, myWindow.windowWidth, myWindow.windowHeight);
-    glDisable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     glDepthMask(GL_TRUE);
@@ -230,7 +214,6 @@ void hamoodViewer::opaquePass(cameraTransformations& camMatrixs, glm::mat4& ligh
     }
 
     //drawing sky box
-    glDisable(GL_CULL_FACE);
     glDepthFunc(GL_LEQUAL);
     glDepthMask(GL_FALSE);
     glUseProgram(shaders.skyboxID);

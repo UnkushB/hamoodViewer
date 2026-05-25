@@ -1,12 +1,9 @@
 #version 430 core
 
-// shader inputs
 in vec2 texture_coords;
 
-// shader outputs
 layout (location = 0) out vec4 frag;
 
-// screen image
 uniform sampler2D msdfAtlas;
 
 uniform int clicked;
@@ -29,5 +26,4 @@ void main()
     else{
       frag = vec4(0.0, 0.0, 0.0, 1.0);
     }
-	// frag = vec4(texture(msdfAtlas, texture_coords).rgb, 1.0f);
 }
