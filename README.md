@@ -38,6 +38,8 @@ Then setting configuration type to release and build root to "${projectDir}\buil
 - GLFW
 - GLM
 - Assimp
+- GLAD
+- stb_image
 
 # Licenses
 No License BUT
