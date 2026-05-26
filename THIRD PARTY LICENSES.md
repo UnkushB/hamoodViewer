@@ -233,7 +233,7 @@ The EGL Specification and various headers:
     MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
 ```
 
-#stb_image
+# stb_image
 ```
 ALTERNATIVE A - MIT License
 Copyright (c) 2017 Sean Barrett
