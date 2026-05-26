@@ -31,7 +31,7 @@ void hamoodWindow::initGLFW() {
         return;
     }
 
-    windowsFile.lpstrFilter = "Supported Formats\0*.obj;*.gltf;*.glb;*.3ds;*.fbx;*.stl\0";
+    windowsFile.lpstrFilter = "Supported Formats\0*.obj;*.gltf;*.glb;*.3ds;*.fbx;*.stl;\0";
     windowsFile.lpstrTitle = "Select 3D Model";
     windowsFile.nMaxFile = sizeof(buff);
     windowsFile.lpstrFile = buff;
