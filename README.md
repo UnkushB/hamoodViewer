@@ -40,7 +40,3 @@ Then setting configuration type to release and build root to "${projectDir}\buil
 - Assimp
 - GLAD
 - stb_image
-
-# Licenses
-No License BUT
-look at [third party licenses](https://github.com/UnkushB/hamoodViewer/blob/9eb90a62b70df24886012588e6d718c6bd109a7d/THIRD%20PARTY%20LICENSES.md)
