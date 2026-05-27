@@ -1,5 +1,5 @@
 # HamoodViewer
-HamoodViewer is a physically based 3D model viewer desktop application. Uses openGL and is written in C++.
+HamoodViewer is a physically based 3D model viewer desktop application for windows. Uses openGL and is written in C++.
 ![alt text](https://github.com/UnkushB/hamoodViewer/blob/3449a223c60e17d045aaabe3c0ab5d58647b0dcb/readMeImages/default.PNG)
 
 # Features
